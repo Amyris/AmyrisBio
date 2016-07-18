@@ -1,0 +1,21 @@
+type project
+owners
+    Amyris
+authors 
+    Amyris
+projectUrl
+    http://github.com/Amyris/AmyrisBio
+iconUrl
+    https://raw.githubusercontent.com/Amyris/AmyrisBio/master/docs/files/img/amyris_logo.png
+licenseUrl
+    http://github.com/Amyris/AmyrisBio/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2016
+tags
+    CompBio F# yeast synbio
+summary
+    Amyris F# Bio
+description
+    Amyris FSharp Computational biology library
