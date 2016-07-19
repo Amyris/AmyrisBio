@@ -2,7 +2,7 @@
 
 open NUnit.Framework
 
-open Amyris.IO
+open Amyris.Bio.IO
 
 let sampleCodonTable = "UUU 22.8( 29999)  UCU 20.7( 27211)  UAU 12.3( 16236)  UGU  5.3(  7030)
 UUC 19.3( 25484)  UCC 14.8( 19542)  UAC 21.5( 28314)  UGC  6.9(  9073)
@@ -43,7 +43,7 @@ type TestCUT() = class
     do
         ()
 
-    let load() = Amyris.IO.CodonUsage.loadCodonTableFromString sampleCodonTable
+    let load() = Amyris.Bio.IO.CodonUsage.loadCodonTableFromString sampleCodonTable
 
     let AssertSameEpsilon (a:double) (b:double) =
         if abs (a-b) > 0.00001 then 
@@ -58,25 +58,25 @@ type TestCUT() = class
     [<Test>]
     member x.PrepCutSimpleFreqLoaded() =
         let p = load()
-        let p2 = Amyris.IO.CodonUsage.prepCUT 0.0 100 p // No filtering
+        let p2 = Amyris.Bio.IO.CodonUsage.prepCUT 0.0 100 p // No filtering
         Assert.AreEqual(p2.Codon("GGT").Value.freq,17.6)
 
     [<Test>]
     member x.ThreeStopCodons() =
         let p = load()
-        let p2 = Amyris.IO.CodonUsage.prepCUT 0.0 100 p// No filtering
+        let p2 = Amyris.Bio.IO.CodonUsage.prepCUT 0.0 100 p// No filtering
         Assert.AreEqual(p2.AA('*').Value.Length,3) // Should be three stop codons
 
     [<Test>]
     member x.TestRel1() =
         let p = load()
-        let p2 = Amyris.IO.CodonUsage.prepCUT 0.0 100 p// No filtering
+        let p2 = Amyris.Bio.IO.CodonUsage.prepCUT 0.0 100 p// No filtering
         AssertSameEpsilon (p2.Codon("CTG").Value.relFreq1) 0.31827731 // CTG should be approx 31% of codons encoding leucine
 
     [<Test>]
     member x.TestRel2() =
         let p = load()
-        let p2 = Amyris.IO.CodonUsage.prepCUT 0.2 100 p // Only codons >=20%
+        let p2 = Amyris.Bio.IO.CodonUsage.prepCUT 0.2 100 p // Only codons >=20%
         Assert.AreEqual(p2.AA('L').Value.Length,2) // Only two codons >=20% of usage
         AssertSameEpsilon (p2.Codon("CTG").Value.relFreq1) 0.31827731 // CTG should still be approx 31% of codons encoding leucine
         AssertSameEpsilon (p2.Codon("CTG").Value.relFreq2) 0.609657948 // but CTG should be approx 61% of codons remaining encoding leucine
@@ -84,7 +84,7 @@ type TestCUT() = class
     [<Test>]
     member x.TestRank() =
         let p = load()
-        let p2 = Amyris.IO.CodonUsage.prepCUT 0.2 100 p // Only codons >=20%
+        let p2 = Amyris.Bio.IO.CodonUsage.prepCUT 0.2 100 p // Only codons >=20%
         Assert.AreEqual(p2.Codon("TTG").Value.rank,2) // TTG is the second ranked 
         Assert.AreEqual(p2.Codon("CTG").Value.rank,1) // TTG is the second ranked 
 end

@@ -4,11 +4,11 @@ owners
 authors 
     Amyris
 projectUrl
-    http://github.com/Amyris/AmyrisBio
+    http://github.com/Amyris/Amyris.Bio
 iconUrl
-    https://raw.githubusercontent.com/Amyris/AmyrisBio/master/docs/files/img/amyris_logo.png
+    https://raw.githubusercontent.com/Amyris/Amyris.Bio/master/docs/files/img/amyris_logo.png
 licenseUrl
-    http://github.com/Amyris/AmyrisBio/blob/master/LICENSE.txt
+    http://github.com/Amyris/Amyris.Bio/blob/master/LICENSE.txt
 requireLicenseAcceptance
     false
 copyright

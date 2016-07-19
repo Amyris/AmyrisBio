@@ -1,12 +1,12 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 /// Optimized lookup for searches of DNA sequencew against whole chromosomes
 module SequenceSearch =
 
-    open Amyris.biolib
-    open Amyris.utils
-    open Amyris.SuffixTree
-    open Amyris.smithWaterman
+    open Amyris.Bio.biolib
+    open Amyris.Bio.utils
+    open Amyris.Bio.SuffixTree
+    open Amyris.Bio.smithWaterman
 
     // A - First method- use suffix trees to find exact matches of substrings
     // 1- Find exact matches of substrings

@@ -1,13 +1,13 @@
-﻿namespace Amyris.IO
+﻿namespace Amyris.Bio.IO
 
 /// Codon Usage table file formats
 module CodonUsage =
     open System
     open System.Text.RegularExpressions
-    open Amyris
-    open Amyris.utils
-    open Amyris.sgd
-    open Amyris.biolib
+    open Amyris.Bio
+    open Amyris.Bio.utils
+    open Amyris.Bio.sgd
+    open Amyris.Bio.biolib
     open System.Collections.Generic
     open System.IO
     (*
@@ -69,7 +69,7 @@ module CodonUsage =
     let computeCodonFrequencies (featureFilter:Feature->bool) (refFolder:String) = 
         let orgName = baseName refFolder
         let (genome, annotation) =
-            (Amyris.biolib.readReference (opj refFolder (sprintf "%s.fsa" orgName)),
+            (Amyris.Bio.biolib.readReference (opj refFolder (sprintf "%s.fsa" orgName)),
              loadFeatures (opj refFolder (sprintf "%s_features.tab" orgName)))
         
         // stop codons
@@ -133,7 +133,7 @@ module CodonUsage =
 
 
     /// Output the computed codon usage in the proper text format (http://www.bioinformatics.org/sms2/rev_trans.html)
-    /// If provided as None, genetic code will the one in Amyris.biolib.codon2aa (standard code)
+    /// If provided as None, genetic code will the one in Amyris.Bio.biolib.codon2aa (standard code)
     let writeCodonTableToGCG
             (filename:string)
             (geneticCode:(char[]->char) option)

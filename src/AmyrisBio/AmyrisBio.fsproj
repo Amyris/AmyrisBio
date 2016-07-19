@@ -7,11 +7,11 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d60eb495-995d-426e-95b2-5f8395ede754</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>AmyrisBio</RootNamespace>
-    <AssemblyName>AmyrisBio</AssemblyName>
+    <RootNamespace>Amyris.Bio</RootNamespace>
+    <AssemblyName>Amyris.Bio</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
-    <Name>AmyrisBio</Name>
+    <Name>Amyris.Bio</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -31,7 +31,7 @@
     <OutputPath>.\bin\Release</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>.\bin\Release\AmyrisBio.xml</DocumentationFile>
+    <DocumentationFile>.\bin\Release\Amyris.Bio.xml</DocumentationFile>
     <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup>

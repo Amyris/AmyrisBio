@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 /// Basic biology operations for sequence reading, translation and blosum ops
 module biolib =

@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 open System.Collections.Generic
 /// Ukkonens suffix tree  algorithm
 module SuffixTree =

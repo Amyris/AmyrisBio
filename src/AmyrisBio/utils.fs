@@ -1,4 +1,4 @@
-namespace Amyris
+namespace Amyris.Bio
 open System
 open System.Text
 open System.Security.Cryptography

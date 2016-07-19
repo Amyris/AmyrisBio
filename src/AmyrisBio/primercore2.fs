@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 open utils
 open System
 /// Tools for oligonucleotide design

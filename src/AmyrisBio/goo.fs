@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 /// Legacy binary format (Amyris) for storing genomes, coverage and SNPs. 
 module Goo =
     open System.IO

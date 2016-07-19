@@ -1,6 +1,6 @@
 ﻿module testClustalParse
 
-open Amyris.IO
+open Amyris.Bio.IO
 
 open NUnit.Framework
 
@@ -148,7 +148,7 @@ type TestClustalParse() = class
     [<Test>]
     member x.Test() =
         for test in [test1 ; test2 ; test3] do
-            let res = Amyris.IO.clustalw.parse test
+            let res = Amyris.Bio.IO.clustalw.parse test
             ()
 
 

@@ -11,11 +11,11 @@ type TestOPQ() = class
     let itemsSortedF = itemsF |> List.sortWith (compare) |> List.rev
     
     let setup() =
-         let pq = Amyris.pqueue.PQ<int,int>()
+         let pq = Amyris.Bio.pqueue.PQ<int,int>()
          items |> List.iteri (fun i v -> pq.Insert(v,i))
          pq
     let setupF() =
-         let pq = Amyris.pqueue.PQ<float,int>()
+         let pq = Amyris.Bio.pqueue.PQ<float,int>()
          itemsF |> List.iteri (fun i v -> pq.Insert(v,i))
          pq
         
@@ -75,7 +75,7 @@ type TestOPQ() = class
 
     [<Test>]
     member x.PeekEmpty() =
-        let p = Amyris.pqueue.PQ<int,int>()
+        let p = Amyris.Bio.pqueue.PQ<int,int>()
         let x = p.PeekN 10
         Assert.AreEqual(x,[])
         let x = p.PeekN 1
@@ -85,7 +85,7 @@ type TestOPQ() = class
     member x.Peek100of10000() =
         let rng = new System.Random()
         
-        let pq = Amyris.pqueue.PQ<double,int>()
+        let pq = Amyris.Bio.pqueue.PQ<double,int>()
         let data = [| for i in {0..9999} -> rng.NextDouble() |]
         for d in data do
             pq.Insert(d,0)
@@ -103,7 +103,7 @@ type TestOPQ() = class
     member x.Simple10() =
         let rng = new System.Random()
         // Simple insert 10, remove 10
-        let pq = Amyris.pqueue.PQ<int,int>()
+        let pq = Amyris.Bio.pqueue.PQ<int,int>()
         for i in {0..10} do
             pq.Insert(i,i*i)
         
@@ -117,7 +117,7 @@ type TestOPQ() = class
     member x.Simple10Min() =
         let rng = new System.Random()
         // Simple insert 10, remove 10
-        let pq = Amyris.pqueue.PQMin<int,int>()
+        let pq = Amyris.Bio.pqueue.PQMin<int,int>()
         for i in {0..10} do
             pq.Insert(i,i*i)
         
@@ -128,7 +128,7 @@ type TestOPQ() = class
     [<Test>]
     member x.Random100() =
         let rng = new System.Random()
-        let pq = Amyris.pqueue.PQ<int,int>()
+        let pq = Amyris.Bio.pqueue.PQ<int,int>()
         let arr = {0..99} |> Array.ofSeq
         for i in {0..98} do
             let r = (rng.Next() % (99-i)) + i + 1
@@ -147,7 +147,7 @@ type TestOPQ() = class
     [<Test>]
     member x.Random100Min() =
         let rng = new System.Random()
-        let pq = Amyris.pqueue.PQMin<int,int>()
+        let pq = Amyris.Bio.pqueue.PQMin<int,int>()
         let arr = {0..99} |> Array.ofSeq
         for i in {0..98} do
             let r = (rng.Next() % (99-i)) + i + 1
@@ -165,7 +165,7 @@ type TestOPQ() = class
     [<Test>]
     member x.Mixed100000() =
         let rng = new System.Random()
-        let pq = Amyris.pqueue.PQ<float,int>()
+        let pq = Amyris.Bio.pqueue.PQ<float,int>()
         let mutable myCount = 0
         for i in {0..100000} do
             if rng.NextDouble() > 0.25 || pq.Empty then

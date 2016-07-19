@@ -1,6 +1,6 @@
 ﻿/// Priority queue implementation
 
-namespace Amyris
+namespace Amyris.Bio
 
 /// PriorityQueue implementation useful for event driven simulation
 module pqueue =

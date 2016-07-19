@@ -1,4 +1,4 @@
-﻿namespace Amyris 
+﻿namespace Amyris.Bio 
 /// math functions that are ubiquitous throughout our other math libraries
 module math_common = 
 

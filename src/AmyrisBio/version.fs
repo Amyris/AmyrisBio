@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 module Version =
     [<Literal>]

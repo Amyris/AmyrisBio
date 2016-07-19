@@ -1,8 +1,8 @@
-namespace Amyris
+namespace Amyris.Bio
 /// optimized banded smithwaterman alignment
 module smithWaterman =
     open System
-    open Amyris.MerHash
+    open Amyris.Bio.MerHash
     open System.IO
     open utils
     type SWDirection = UP | LEFT | DIAG |NOWHERE

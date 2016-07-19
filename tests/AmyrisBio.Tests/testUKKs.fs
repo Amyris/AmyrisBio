@@ -1,11 +1,11 @@
 ﻿module testUKKs
 
-open Amyris
-open Amyris.math_common
-open Amyris.math_bhg
-open Amyris.math_spf
-open Amyris.math_stat
-open Amyris.SuffixTree
+open Amyris.Bio
+open Amyris.Bio.math_common
+open Amyris.Bio.math_bhg
+open Amyris.Bio.math_spf
+open Amyris.Bio.math_stat
+open Amyris.Bio.SuffixTree
 open NUnit.Framework
 open System.IO   
 open System

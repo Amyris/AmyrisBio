@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 /// beta , gamma distribution implementations
 module math_spf = 
     
@@ -82,12 +82,12 @@ module math_spf =
             let zp = zgh**(zh*0.5) // avoids overflow error for z>141
             // Lanczos calculated to n=15, should be sufficient for our purposes; see lanczos z for details
             let ss = lanczos1 (z+1.0) g // calls lanczos subroutine, need to add 1.0 b/c lanczos already subtracts 1.0 from z
-            if abs((round z)-z)<Epsilon && z<=0.0 (* && not imaginary *) then failwith "gamma(%f) evaluates to infinity!" z 
+            if abs((round z)-z)<Epsilon && z<=0.0 (* && not imaginary *) then failwithf "gamma(%f) evaluates to infinity!" z 
             else match z=0.0,z=1.0,z>0.0 with   | true,false,false -> 1.0
                                                 | false,true,true -> 1.0
                                                 | false,false,true -> (RT2PI*ss)*((zp**2.0)*(exp (-zgh))) 
                                                 | false,false,false -> (RT2PI*ss)*((zp**2.0)*(exp (-zgh))) |> (fun y -> (-PI)/(z*y*sin(PI*z)))
-                                                | _,_,_ -> failwith "z=%A unexpected" z
+                                                | _,_,_ -> failwithf "z=%A unexpected" z
 
 
     /// Upper incomplete gamma function evaluates integral x->Inf; Lower evaluates 0->x
@@ -234,7 +234,7 @@ module math_spf =
                 let delta = C'*D'
                 let fn = f*delta
                 if (abs (delta-1.0)) < Epsilon then fn
-                else if i>500 then failwith "continued fraction has not converged after %i interations" i
+                else if i>500 then failwithf "continued fraction has not converged after %i interations" i
                 else gFrac fn alpha' beta' C' D' (i+1)
             let pterm = (x**a)*((1.0-x)**b)/(beta a b)
             gFrac fnot anot bnot Cnot Dnot 1 |> (/) pterm // division accounts for real alpha0=1.0; took this trick from c++ boost docs

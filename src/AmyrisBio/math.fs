@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 /// common high-level math module; this includes all supporting modules
 module math = 

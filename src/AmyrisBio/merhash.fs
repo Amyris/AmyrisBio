@@ -1,7 +1,7 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 /// Rapid searches for matching or repetitive sequences using Mer hashing
 module MerHash =
-    open Amyris.biolib
+    open Amyris.Bio.biolib
     open System
     open System.IO
     let mutable randBase = 0

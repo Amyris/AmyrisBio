@@ -2,8 +2,8 @@
 open NUnit.Framework
 
 open System.IO
-open Amyris.SuffixTree
-open Amyris.utils
+open Amyris.Bio.SuffixTree
+open Amyris.Bio.utils
 open System.Diagnostics
 let rng = new System.Random()
 

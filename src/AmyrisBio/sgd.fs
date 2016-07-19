@@ -1,4 +1,4 @@
-namespace Amyris
+namespace Amyris.Bio
 /// routines for using some Saccharomyces Genome Database formats,
 module sgd =
 
@@ -357,7 +357,7 @@ module sgd =
         if not (File.Exists featureFile) then
             failwithf "ERROR: strain feature %s does not exist" featureFile 
 
-        (Amyris.biolib.readReference fastaFile,  loadFeatures featureFile)
+        (Amyris.Bio.biolib.readReference fastaFile,  loadFeatures featureFile)
 
 
     /// phase uses the GFF3 convention, ie nb of bases to remove before reaching the first codon of the CDS
@@ -608,7 +608,7 @@ module sgd =
             | MISSING_STOP_CODON -> "MISSING_STOP_CODON"
     
     /// Check different things on a gene sequence: start codon, proper stop, premature stops, length multiple of 3.
-    /// geneticCode is usually the codon2aa function from Amyris.biolib. gene input is usually provided by builGeneStructure
+    /// geneticCode is usually the codon2aa function from Amyris.Bio.biolib. gene input is usually provided by builGeneStructure
     let checkGene
             (geneticCode:char []->char)
             (genome:Dictionary<string,char[]>)

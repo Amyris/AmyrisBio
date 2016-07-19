@@ -1,6 +1,6 @@
 ﻿module testPrimer
 
-open Amyris.primercore
+open Amyris.Bio.primercore
 open NUnit.Framework
 
 
@@ -27,11 +27,11 @@ type TestPrimer() = class
         let z = "CGCTCGTCCAACGCCGGCGGACCTC".ToCharArray()
         let zz = "CGCTCGTCCAACGCCGGCGGACCTG".ToCharArray()
         
-        let a = temp Amyris.primercore.defaultParams x 24
+        let a = temp Amyris.Bio.primercore.defaultParams x 24
         for s in [ y;z;zz] do
-            let b = temp Amyris.primercore.defaultParams s 24
+            let b = temp Amyris.Bio.primercore.defaultParams s 24
             if abs(b-a) > 1.0E-5<C> then
                 Assert.Fail(sprintf "%s[.23] and \n%s[..23] give Tms of %f and %f respectively" 
-                                            (Amyris.utils.arr2seq x) 
-                                            (Amyris.utils.arr2seq s) (a/1.0<C>) (b/1.0<C>))
+                                            (Amyris.Bio.utils.arr2seq x) 
+                                            (Amyris.Bio.utils.arr2seq s) (a/1.0<C>) (b/1.0<C>))
 end

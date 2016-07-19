@@ -1,6 +1,6 @@
 ﻿// Tools to handle SNPs, Indels.
 
-namespace Amyris
+namespace Amyris.Bio
 open utils
 open biolib
 open System.Text.RegularExpressions
@@ -123,8 +123,9 @@ module mutations =
 
             if not (originalSeq.[(m.refpos-coordinateOffset)..(m.refpos + m.refseq.Length-1-coordinateOffset)] = m.refseq)
             then 
-                failwith "Mutation reference sequence does not match the provided reference sequence: %s vs %s"
-                    originalSeq.[(m.refpos-coordinateOffset)..(m.refpos + m.refseq.Length-1-coordinateOffset)] m.refseq
+                failwithf "Mutation reference sequence does not match the provided reference sequence: %s vs %s"
+                    (originalSeq.[(m.refpos-coordinateOffset)..(m.refpos + m.refseq.Length-1-coordinateOffset)] |> arr2seq) 
+                    (arr2seq m.refseq)
             let (before, after) =
                 match (m.refpos - coordinateOffset) with 
                 | 0 -> ([||], originalSeq.[(m.refseq.Length)..])

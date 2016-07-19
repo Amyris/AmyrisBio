@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 /// statistical functions and random number generators
 module math_stat =
@@ -155,7 +155,7 @@ module math_stat =
             else (((var1/count1f)+(var2/count2f))**2.0)/((((var1/count1f)**2.0)/(count1f-1.0))+(((var2/count2f)**2.0)/(count2f-1.0)))
         if System.Double.IsNaN(t) then failwith "NaN generated; remember test with unequal variance requires sample with n>1" 
         //let pi_inv:double = 0.3183098861837906715377675 // one over pi; used in cdf integration heuristic
-        if dof < 1.0 then failwith "dof < 1: (%d)\n" dof
+        if dof < 1.0 then failwithf "dof < 1: (%f)\n" dof
         pt t dof
 
 

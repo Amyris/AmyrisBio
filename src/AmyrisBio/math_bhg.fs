@@ -1,5 +1,5 @@
 ﻿
-namespace Amyris
+namespace Amyris.Bio
 /// efficient binomial, hypergeometric and prime number calculations
 module math_bhg =
 

@@ -1,11 +1,11 @@
-﻿module AmyrisTest
+﻿module Amyris.BioTest
 
-open Amyris
-open Amyris.math_common
-open Amyris.math_bhg
-open Amyris.math_spf
-open Amyris.math_stat
-open Amyris.SuffixTree
+open Amyris.Bio
+open Amyris.Bio.math_common
+open Amyris.Bio.math_bhg
+open Amyris.Bio.math_spf
+open Amyris.Bio.math_stat
+open Amyris.Bio.SuffixTree
 open NUnit.Framework
    
 
@@ -154,14 +154,5 @@ let run() =
     testST()
     printf "done\n"
     stdin.ReadLine() |> ignore
-
-// needed to kill this guy; referring to an fsa file that I do not have ...  eeb 4/12/2011
-(* // 
-let readRefTest() =
-    let d = Amyris.sgd.readReference(@"c:\Amyris\seq\GSL\gslc\lib\cenpk\cenpk.fsa")
-    printf "%d" (d.Count)
-    *)
-//readRefTest()
-
 
 run()

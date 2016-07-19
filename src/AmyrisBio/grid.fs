@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 /// A tool for importing tab delimited data with a header row allowing name based
 /// lookup of columns

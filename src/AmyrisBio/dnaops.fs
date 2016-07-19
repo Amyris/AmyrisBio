@@ -1,4 +1,4 @@
-﻿namespace Amyris
+﻿namespace Amyris.Bio
 
 ///
 /// Simulation of DNA / epcr operations in silico

@@ -1,4 +1,4 @@
-﻿namespace Amyris.IO
+﻿namespace Amyris.Bio.IO
 
 /// parser for CLUSTAL file format
 module clustalw =
