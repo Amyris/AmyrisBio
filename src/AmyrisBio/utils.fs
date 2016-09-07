@@ -344,3 +344,19 @@ module utils =
                 ("",new ResizeArray<BP>() , [] ) 
 
         (currChr, (currArray.ToArray()))::accum 
+
+    /// View a slice of an array as a sequence without copying the subarray.
+    /// If a copy is desired, slice the array directly instead of using this function.
+    let arraySliceSeq (array: 'T []) startInd endInd =
+        let endOfArrayIndex = array.Length - 1
+        if startInd < 0 || startInd > endOfArrayIndex || endInd < 0 || endInd > endOfArrayIndex then
+            raise (System.IndexOutOfRangeException())
+        seq {
+            for i in startInd..endInd -> array.[i]
+        }
+
+    /// Return true if two character sequences are identical.
+    let compareSliceSeqs seqA seqB =
+        match (Seq.compareWith Operators.compare seqA seqB) with
+        | 0 -> true
+        | _ -> false
