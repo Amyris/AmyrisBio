@@ -5,8 +5,10 @@ module Amyris.Bio.Stitching
 /// Interally backed by a char array.
 /// Ensures that contents have been uniformly converted to uppercase if validation is performed.
 /// Lazy memoized access to string representation as well as reverse compliment version of itself.
+/// This data structure is absolutely not thread safe.
 type Dna private (asArray: char [], rc: Dna option) =
 
+    // Private mutable values to permit memoization.
     let mutable asString: string option = None
     let mutable revComp: Dna option = rc
 
