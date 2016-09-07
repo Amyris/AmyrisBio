@@ -143,6 +143,7 @@ let overlapStitchWithLinkers
         // Return a new Dna sequence from the computed overlap
         // Get the tail of seq1 minus linker and overlap region
         let stitchedSeq = Seq.append (seq0.Subseq(0, seq0End)) (seq1RC.Subseq(seq1RCStart + l))
+        // skip validation as incoming DNA should already be validated
         Dna(stitchedSeq, false)
 
 
