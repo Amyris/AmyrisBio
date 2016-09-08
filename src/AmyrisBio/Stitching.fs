@@ -69,7 +69,7 @@ type Dna private (asArray: char [], rc: Dna option) =
             revComp <- Some(rcDna)
             rcDna
 
-type SearchParameters =
+type OverlapSearchParameters =
    {minOverlap: uint64 option;
     maxOverlap: uint64 option}
 
@@ -148,4 +148,50 @@ let overlapStitchWithLinkers
         // skip validation as incoming DNA should already be validated
         Dna(stitchedSeq, false)
 
+type LoopoutSearchParams =
+   {prefixSearchLength: int;
+    minOverlap: uint64;
+    maxOverlap: uint64;
+    allowAnomaly: bool}
 
+let defaultLoopoutSearchParams =
+   {prefixSearchLength = 8;
+    minOverlap = 50UL;
+    maxOverlap = 500UL;
+    allowAnomaly = false}
+
+/// Find a pair of candiates indices that bookend a potential direct repeat
+/// Allow matches to be within +-1 bp to allow for up to one SNP.
+let findBookendCandidates (s: Dna) searchParams start =
+    let snippetLen = searchParams.prefixSearchLength
+    let tail = s.str.Substring(s.Length - snippetLen)
+    let head = s.str.Substring(0, snippetLen)
+
+    let minIndex = (int searchParams.minOverlap) - snippetLen
+    let maxIndex = (int searchParams.maxOverlap) - snippetLen
+
+    /// Given a candidate match of tail to head, see if head is present at the mirror position.
+    let checkMirrorMatch index =
+        ()
+
+    let rec findCloseMatch (start: int) =
+        // Starting at start, find the next occurrence of the tail snippet
+        match s.str.IndexOf(tail, start) with
+        | -1 -> None // No matches left, we're done
+        | i when i < minIndex ->
+            // Found a candidate but it implies insufficient overlap.  Continue.
+            findCloseMatch (i+1)
+        | i when i > maxIndex ->
+            // Found a candidate but it implies too large of an overlap.  Abort.
+            None
+        | i ->
+            // Potentially good candiate, see if its a loose match
+            None
+    ()
+         
+/// Given a sequence that may loop itself out, compute the looped-out sequence.
+/// The loopout repeat sections must be at the very beginning and very end of the sequence.
+/// This algorithm optionally tolerates up to one SNP or mutation in the two repeats.
+let computeLoopoutSequence (sequence: Dna) =
+
+    ()
