@@ -1,4 +1,4 @@
-﻿/// Algorithms for stitching genetic constructs
+﻿/// Algorithms for stitching genetic constructs simulating molecular biology operations
 module Amyris.Bio.Stitching
 
 /// Domain type for immutable DNA sequences.
@@ -80,8 +80,11 @@ let defaultSearchParameters =
     maxOverlap = None}
 
 /// Compute the DNA sequence expected to result from homologous recombination.
-/// This function assumes both sequences are provided in the sense direction,
-/// and will internally take the reverse compliment of seq1 to find the overlap.
+/// This function assumes both sequences are antiparallel and provided in the sense direction,
+/// seq0 ------------------------------------LLLLLLL>
+///                       <LLLLL------------------------------------ seq1
+///                             overlapoverla
+/// and will internally take the reverse complement of seq1 to find the overlap.
 /// The returned sequence will read in the sense direction of seq0.
 /// Any linker tails must be explicitly provided or stitching will fail.
 /// This function will check for exact overlap within the provided window,
