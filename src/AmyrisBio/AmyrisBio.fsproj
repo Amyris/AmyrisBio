@@ -62,7 +62,7 @@
     <Compile Include="smithwaterman.fs" />
     <Compile Include="sgd.fs" />
     <Compile Include="primercore2.fs" />
-    <Compile Include="Stitching.fs" />
+    <Compile Include="stitching.fs" />
     <Compile Include="math_common.fs" />
     <Compile Include="math_bhg.fs" />
     <Compile Include="math_spf.fs" />
@@ -108,4 +108,5 @@
       </ItemGroup>
     </When>
   </Choose>
+</Project>
 </Project>
