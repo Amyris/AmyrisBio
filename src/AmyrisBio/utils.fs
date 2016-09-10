@@ -346,11 +346,30 @@ module utils =
         (currChr, (currArray.ToArray()))::accum 
 
     /// Return true if two character sequences are identical.
-    let compareSliceSeqs seqA seqB =
+    let compareSlices seqA seqB =
         match (Seq.compareWith Operators.compare seqA seqB) with
         | 0 -> true
         | _ -> false
 
-    /// Evaluate whether two sequences are identical up to the presence of a single SNP.
-    let compareSeqsAllowSnp seqA seqB =
-        ()
+    /// Zip two sequences of dissimilar length, padding missing entries in the shorter sequence
+    /// with None.
+    let zipWithPad (a: seq<'T>) (b: seq<'U>) =
+        let aEnum = a.GetEnumerator()
+        let bEnum = b.GetEnumerator()
+        seq {
+            let rec step() =
+                seq {
+                    match aEnum.MoveNext(), bEnum.MoveNext() with
+                    | true, true ->
+                        yield Some(aEnum.Current), Some(bEnum.Current)
+                        yield! step()
+                    | true, false ->
+                        yield Some(aEnum.Current), None
+                        yield! step()
+                    | false, true ->
+                        yield None, Some(bEnum.Current)
+                        yield! step()
+                    | false, false -> ()
+                }
+            yield! step()
+        }

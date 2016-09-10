@@ -3,6 +3,7 @@ module Amyris.Bio.Stitching
 open biolib
 open Amyris.Dna
 open Chessie.ErrorHandling
+open utils
 
 
 type OverlapSearchParameters =
@@ -91,7 +92,7 @@ let overlapStitchWithMargins req =
             let seq0Slice = seq0.Subseq(seq0End - len + 1, seq0End)
             let seq1Slice = seq1RC.Subseq(seq1RCStart, seq1RCStart + len - 1)
             // If slices are equal, we have aligned the two stitches.
-            if utils.compareSliceSeqs seq0Slice seq1Slice then
+            if compareSlices seq0Slice seq1Slice then
                 Some(len)
             elif len >= maxOverlap then
                 None
@@ -121,9 +122,83 @@ let defaultLoopoutSearchParams =
     maxOverlap = 500UL;
     allowAnomaly = false}
 
-/// Find a pair of candiates indices that bookend a potential direct repeat
-/// Allow matches to be within +-1 bp to allow for up to one SNP.
-let findBookendCandidates (s: Dna) searchParams start =
+type LoopoutResult =
+    | NoLoopout
+    | Loopout of Dna * Dna option
+
+/// Given two sequences, return the tails of the two sequences following
+/// any mismatch in character.
+let mismatchedTails (a: Dna) (b: Dna) =
+    let mutable foundMismatch = false
+    let aTail, bTail =
+        seq {
+            for x, y in zipWithPad a b do
+                if foundMismatch then yield (x, y)
+                elif x <> y then
+                    foundMismatch <- true
+                    yield (x, y)}
+        |> Array.ofSeq
+        |> Array.unzip
+
+    let dnaify x = Dna(Seq.choose id x, false)
+
+    (dnaify aTail, dnaify bTail)
+
+type SeqCompareResultWithSnp =
+    | NotEqual
+    | Equal
+    | EqualWithSnp
+
+/// Determine whether two Dna segments are the same allowing for a single SNP.
+/// The snp cannot be the first or last BP in the sequence.  Note that this restriction
+/// implies that some problematic edge cases will be declared false when they might be
+/// true.
+let equalWithSnp (a: Dna) (b: Dna) =
+    /// diffLen = 0 implies no SNP, +1 means missing BP in b, -1 means missing BP in a
+    let diffLen = a.Length - b.Length
+
+    if (abs diffLen) > 1 then NotEqual
+    elif diffLen = 0 then (if a = b then Equal else NotEqual)
+    else
+        let aTail, bTail = mismatchedTails a b
+
+        let longer, shorter =
+            if aTail.Length > bTail.Length then aTail, bTail else bTail, aTail
+
+        // Reject some edge cases
+        // Longer sequence has extra BP appended or doesn't match
+        if longer.Length = 1 then NotEqual
+
+        // Longer sequence has extra BP prepended or doesn't match
+        elif longer.Length = (if diffLen = 1 then a else b).Length then NotEqual
+        elif compareSlices (longer.Subseq(1)) shorter then EqualWithSnp
+        else NotEqual
+
+
+type LoopoutRequest = {s: Dna; searchParams: LoopoutSearchParams}
+
+/// Validate and massage loopout search parameters.
+let validateLoopoutParameters (req: LoopoutRequest) =
+    // Sequence needs to be at least 2x the size of the min loopout construct
+    if req.s.Length < 2 * int(req.searchParams.minOverlap) then
+        fail (sprintf
+            "Sequence is too short to loop out; min repeat size is %i, sequence is %i bp."
+            (req.searchParams.minOverlap)
+            (req.s.Length))
+    else
+        // Restrict the max overlap search size to seq length / 2
+        // Might want a far more conservative limit here, like some kind of min looped out seq length
+        ok {req with searchParams = {req.searchParams with maxOverlap = uint64(req.s.Length / 2)}}
+
+
+/// Compute the loopout scar(s) for a sequence, if it satisfies these requirements:
+/// The direct repeat segments must be at the very beginning and very end of the sequence.
+/// The direct repeats may be identical or differ by a single snp.
+/// Returns one or two sequences (two are returned if the repeat contained a snp).
+let computeLoopoutScarPostValidation (req: LoopoutRequest) =
+
+    let s, searchParams = req.s, req.searchParams
+
     let snippetLen = searchParams.prefixSearchLength
     let tail = s.str.Substring(s.Length - snippetLen)
     let head = s.str.Substring(0, snippetLen)
@@ -131,28 +206,60 @@ let findBookendCandidates (s: Dna) searchParams start =
     let minIndex = (int searchParams.minOverlap) - snippetLen
     let maxIndex = (int searchParams.maxOverlap) - snippetLen
 
-    /// Given a candidate match of tail to head, see if head is present at the mirror position.
-    let checkMirrorMatch index =
-        ()
+    /// get the sequence start indices at mirror position that match the snippet sequence
+    let getMirrorMatches ind =
+        let mirrorIndexStart = s.Length - ind - tail.Length - 1
+        // prefer no offset to +- 1
+        let offsets = [0; 1; -1]
 
-    let rec findCloseMatch (start: int) =
+        let checkMatch offset =
+            let start = mirrorIndexStart + offset
+            let finish = start + head.Length - 1
+            compareSlices head (s.Subseq(start, finish))
+
+        offsets 
+        |> List.filter checkMatch
+        |> List.map (fun offset -> offset + mirrorIndexStart)
+
+    /// Given a candidate mirror match, check if the sequences are equivalent.
+    let checkMatch leftStart rightStart =
+        // leftStart is where the match was found, full seq includes the tail segment
+        let leftSeq = s.[..leftStart + tail.Length - 1]
+        let rightSeq = s.[rightStart..]
+        match equalWithSnp leftSeq rightSeq with
+        | NotEqual -> None
+        | Equal -> Some(leftSeq, None)
+        | EqualWithSnp -> Some(leftSeq, Some(rightSeq))
+
+    /// Search for candidate locations where this diagram holds true:
+    /// HEADSEQ...n bp...TAILSEQ... ...HEADSEQ...n+-1 bp...TAILSEQ
+    /// If candidate matches are found, check them and return the loopout scar(s) if they match.
+    let rec search (start: int) =
         // Starting at start, find the next occurrence of the tail snippet
         match s.str.IndexOf(tail, start) with
-        | -1 -> None // No matches left, we're done
+        | -1 -> ok NoLoopout // No matches left, we're done
         | i when i < minIndex ->
             // Found a candidate but it implies insufficient overlap.  Continue.
-            findCloseMatch (i+1)
+            search (i+1)
         | i when i > maxIndex ->
             // Found a candidate but it implies too large of an overlap.  Abort.
-            None
+            ok NoLoopout
         | i ->
             // Potentially good candiate, see if its a loose match
-            None
-    ()
-         
-/// Given a sequence that may loop itself out, compute the looped-out sequence.
-/// The loopout repeat sections must be at the very beginning and very end of the sequence.
-/// This algorithm optionally tolerates up to one SNP or mutation in the two repeats.
-let computeLoopoutSequence (sequence: Dna) =
+            // Check for head snippet at the mirror position +- 1 bp
+            match getMirrorMatches i with
+            | [] -> search (i+1) // no mirror match, keep looking
+            | x -> // found some matches
+                match x |> List.choose (checkMatch i) with
+                | [] -> search (i+1) // no good matches
+                | [x] -> ok (Loopout(x)) // one perfect match
+                | x -> fail (sprintf "Multiple possible loopout matches found: %A" x)
+    
+    search 0
 
-    ()
+/// Compute the loopout scar(s) for a sequence, if it satisfies these requirements:
+/// The direct repeat segments must be at the very beginning and very end of the sequence.
+/// The direct repeats may be identical or differ by a single snp.
+/// Returns one or two sequences (two are returned if the repeat contained a snp).
+let computeLoopoutScar (req: LoopoutRequest) =
+    req |> (validateLoopoutParameters >> bind computeLoopoutScarPostValidation)

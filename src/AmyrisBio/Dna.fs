@@ -1,6 +1,8 @@
 ﻿namespace Amyris.Dna
 open Amyris.Bio
 open System
+open System.Collections
+open System.Collections.Generic
 open biolib
 open utils
 
@@ -57,6 +59,8 @@ type Dna private (asArray:char [], rc: Dna option) =
 
     // Implement convenience interfaces for various standard things
 
+    override x.ToString() = x.str
+
     // Implement F# indexing to return a single char.
     member x.Item(i) = x.arr.[i]
 
@@ -65,6 +69,11 @@ type Dna private (asArray:char [], rc: Dna option) =
         let start = defaultArg start 0
         let finish = defaultArg finish (asArray.Length-1)
         Dna(x.Subseq(start, finish), false)
+
+    interface IEnumerable<char> with
+        member x.GetEnumerator() = (Seq.cast<char> asArray).GetEnumerator()
+    interface IEnumerable with
+        member x.GetEnumerator() = asArray.GetEnumerator()
 
     // Implement equality between similiar types
     override x.Equals(other) =

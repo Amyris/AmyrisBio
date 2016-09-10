@@ -63,3 +63,87 @@ let testOverlapStitching() =
     let reqSelf = {req0 with seq1 = req0.seq0; margin1 = req0.margin0}
 
     assertUnstitchable (overlapStitchWithMargins reqSelf)
+
+
+[<Test>]
+let testMismatchedTails() =
+
+    let check a b correctA correctB =
+        let aTail, bTail = mismatchedTails (Dna(a)) (Dna(b))
+        Assert.AreEqual(Dna(correctA), aTail)
+        Assert.AreEqual(Dna(correctB), bTail)
+
+    check "atcggctatgcagtg" "atcggctCatgcagtg" "atgcagtg" "Catgcagtg"
+    check "" "a" "" "a"
+    check "aa" "a" "a" ""
+    check "" "" "" ""
+    check "atcg" "atcg" "" ""
+
+[<Test>]
+let testEqualWithSnp() =
+    let check a b correct =
+        // check both argument orderings for paranoia
+        Assert.AreEqual(correct, equalWithSnp (Dna(a)) (Dna(b)))
+        Assert.AreEqual(correct, equalWithSnp (Dna(b)) (Dna(a)))
+
+    check "atcgcgatcgtacgacaagta" "atcgcgatcgtacgacaagta" Equal // identical seqs
+    check "atcgcgatcAgtacgacaagta" "atcgcgatcgtacgacaagta" EqualWithSnp // easy case, one snp in the middle
+    check "atcg" "atAcg" EqualWithSnp
+    check "atcg" "atcgA" NotEqual // reject single appended BP
+    check "Catcg" "atcg" NotEqual // reject single prepended BP
+    check "AAA" "AAA" Equal
+    check "A" "A" Equal
+    check "ATC" "AGC" NotEqual // reject single BP mutations
+    check "atcggcatcagc" "aCcggcaTtcagc" NotEqual // reject if mutation present with snp
+
+let defaultReq s = {s = s; searchParams = defaultLoopoutSearchParams}
+
+let assertSingleLoopout s res =
+    match computeLoopoutScar (defaultReq s) with
+    | Ok(Loopout(ls, None), msgs) ->
+        Assert.AreEqual(res, ls)
+        Assert.IsEmpty(msgs)
+    | x ->
+        Assert.Fail(sprintf "Wrong result: %A" x)
+
+let assertMultiLoopout s (res: Dna * Dna) =
+    match computeLoopoutScar (defaultReq s) with
+    | Ok(Loopout(ls0, Some(ls1)), msgs) ->
+        Assert.AreEqual(res, (ls0, ls1))
+        Assert.IsEmpty(msgs)
+    | x ->
+        Assert.Fail(sprintf "Wrong result: %A" x)
+
+let assertNoLoopout s =
+    match computeLoopoutScar (defaultReq s) with
+    | Ok(NoLoopout, msgs) ->
+        Assert.IsEmpty(msgs)
+    | x ->
+        Assert.Fail(sprintf "Wrong result: %A" x)
+
+let assertLoopoutError s =
+    match computeLoopoutScar (defaultReq s) with
+    | Bad([msg]) ->
+        Assert.That(msg.Contains("Multiple possible loopout matches found:"))
+    | x ->
+        Assert.Fail(sprintf "Wrong result: %A" x)
+
+[<Test>]
+let testLoopoutSimple() =
+
+    let repeat60BP = "AGCACCCTCCACAAGGTCAAGTGGTATCCTGGTAAGGTAAGCTCGTACCGTGATTCATGC"
+    let loopedOutRegion = "GACAGGGGTAAGACCATCAGTAGTAGGGATAGTGCCAAACCTCACTCACCACTGCCAATAAGGGGTCCTTACCTGAAGAATAAGTGTCAGCCAGTGTAAC"
+
+    let s = Dna(repeat60BP + loopedOutRegion + repeat60BP)
+
+    assertSingleLoopout s (Dna(repeat60BP))
+
+    let repeat60BPAddSnp = "AGCACCCTCCACAAGGTCAAGTGGTATCaCTGGTAAGGTAAGCTCGTACCGTGATTCATGC"
+
+    let sWithSnp = Dna(repeat60BP + loopedOutRegion + repeat60BPAddSnp)
+
+    assertMultiLoopout sWithSnp (Dna(repeat60BP), Dna(repeat60BPAddSnp))
+
+    let randomDna200BP = "CCGATGAGGAACCCAAAAGGCGAACCGGGCCAGACAACCCGGCGGTATCGCACTCAAAGCCGGGACACGACGCGTCACAGCCGGTAAGAGTAACCCCGGAGTGAAGACCTATGGGGCTGGATAAAACTGCCGTGGTAACCGCCTTCAACAACCCGAATACGTGGCACTTCAGGAGGCGCCCGGAGGGGGGATGTTTTCTA"
+
+    assertNoLoopout (Dna(randomDna200BP))
