@@ -1,3 +1,6 @@
+### v2.0.4 -- September 12, 2016
+* Added stitching module.
+
 ### v2.0.3 -- July 17, 2016
 * Migrated to Project Scaffold for final release
 
