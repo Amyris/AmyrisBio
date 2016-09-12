@@ -144,17 +144,17 @@ let mismatchedTails (a: Dna) (b: Dna) =
 
     (dnaify aTail, dnaify bTail)
 
-type SeqCompareResultWithSnp =
+type SeqCompareResultWithIndel =
     | NotEqual
     | Equal
-    | EqualWithSnp
+    | EqualWithIndel
 
-/// Determine whether two Dna segments are the same allowing for a single SNP.
-/// The snp cannot be the first or last BP in the sequence.  Note that this restriction
+/// Determine whether two Dna segments are the same allowing for a single indel.
+/// The indel cannot be the first or last BP in the sequence.  Note that this restriction
 /// implies that some problematic edge cases will be declared false when they might be
 /// true.
-let equalWithSnp (a: Dna) (b: Dna) =
-    /// diffLen = 0 implies no SNP, +1 means missing BP in b, -1 means missing BP in a
+let equalWithIndel (a: Dna) (b: Dna) =
+    /// diffLen = 0 implies no indel, +1 means missing BP in b, -1 means missing BP in a
     let diffLen = a.Length - b.Length
 
     if (abs diffLen) > 1 then NotEqual
@@ -171,7 +171,7 @@ let equalWithSnp (a: Dna) (b: Dna) =
 
         // Longer sequence has extra BP prepended or doesn't match
         elif longer.Length = (if diffLen = 1 then a else b).Length then NotEqual
-        elif compareSlices (longer.Subseq(1)) shorter then EqualWithSnp
+        elif compareSlices (longer.Subseq(1)) shorter then EqualWithIndel
         else NotEqual
 
 
@@ -193,8 +193,8 @@ let validateLoopoutParameters (req: LoopoutRequest) =
 
 /// Compute the loopout scar(s) for a sequence, if it satisfies these requirements:
 /// The direct repeat segments must be at the very beginning and very end of the sequence.
-/// The direct repeats may be identical or differ by a single snp.
-/// Returns one or two sequences (two are returned if the repeat contained a snp).
+/// The direct repeats may be identical or differ by a single indel.
+/// Returns one or two sequences (two are returned if the repeat contained a indel).
 let computeLoopoutScarPostValidation (req: LoopoutRequest) =
 
     let s, searchParams = req.s, req.searchParams
@@ -226,10 +226,10 @@ let computeLoopoutScarPostValidation (req: LoopoutRequest) =
         // leftStart is where the match was found, full seq includes the tail segment
         let leftSeq = s.[..leftStart + tail.Length - 1]
         let rightSeq = s.[rightStart..]
-        match equalWithSnp leftSeq rightSeq with
+        match equalWithIndel leftSeq rightSeq with
         | NotEqual -> None
         | Equal -> Some(leftSeq, None)
-        | EqualWithSnp -> Some(leftSeq, Some(rightSeq))
+        | EqualWithIndel -> Some(leftSeq, Some(rightSeq))
 
     /// Search for candidate locations where this diagram holds true:
     /// HEADSEQ...n bp...TAILSEQ... ...HEADSEQ...n+-1 bp...TAILSEQ
@@ -259,7 +259,7 @@ let computeLoopoutScarPostValidation (req: LoopoutRequest) =
 
 /// Compute the loopout scar(s) for a sequence, if it satisfies these requirements:
 /// The direct repeat segments must be at the very beginning and very end of the sequence.
-/// The direct repeats may be identical or differ by a single snp.
-/// Returns one or two sequences (two are returned if the repeat contained a snp).
+/// The direct repeats may be identical or differ by a single indel.
+/// Returns one or two sequences (two are returned if the repeat contained a indel).
 let computeLoopoutScar (req: LoopoutRequest) =
     req |> (validateLoopoutParameters >> bind computeLoopoutScarPostValidation)

@@ -80,21 +80,21 @@ let testMismatchedTails() =
     check "atcg" "atcg" "" ""
 
 [<Test>]
-let testEqualWithSnp() =
+let testEqualWithIndel() =
     let check a b correct =
         // check both argument orderings for paranoia
-        Assert.AreEqual(correct, equalWithSnp (Dna(a)) (Dna(b)))
-        Assert.AreEqual(correct, equalWithSnp (Dna(b)) (Dna(a)))
+        Assert.AreEqual(correct, equalWithIndel (Dna(a)) (Dna(b)))
+        Assert.AreEqual(correct, equalWithIndel (Dna(b)) (Dna(a)))
 
     check "atcgcgatcgtacgacaagta" "atcgcgatcgtacgacaagta" Equal // identical seqs
-    check "atcgcgatcAgtacgacaagta" "atcgcgatcgtacgacaagta" EqualWithSnp // easy case, one snp in the middle
-    check "atcg" "atAcg" EqualWithSnp
+    check "atcgcgatcAgtacgacaagta" "atcgcgatcgtacgacaagta" EqualWithIndel // easy case, one indel in the middle
+    check "atcg" "atAcg" EqualWithIndel
     check "atcg" "atcgA" NotEqual // reject single appended BP
     check "Catcg" "atcg" NotEqual // reject single prepended BP
     check "AAA" "AAA" Equal
     check "A" "A" Equal
     check "ATC" "AGC" NotEqual // reject single BP mutations
-    check "atcggcatcagc" "aCcggcaTtcagc" NotEqual // reject if mutation present with snp
+    check "atcggcatcagc" "aCcggcaTtcagc" NotEqual // reject if mutation present with indel
 
 let defaultReq s = {s = s; searchParams = defaultLoopoutSearchParams}
 
@@ -138,11 +138,11 @@ let testLoopoutSimple() =
 
     assertSingleLoopout s (Dna(repeat60BP))
 
-    let repeat60BPAddSnp = "AGCACCCTCCACAAGGTCAAGTGGTATCaCTGGTAAGGTAAGCTCGTACCGTGATTCATGC"
+    let repeat60BPAddIndel = "AGCACCCTCCACAAGGTCAAGTGGTATCaCTGGTAAGGTAAGCTCGTACCGTGATTCATGC"
 
-    let sWithSnp = Dna(repeat60BP + loopedOutRegion + repeat60BPAddSnp)
+    let sWithIndel = Dna(repeat60BP + loopedOutRegion + repeat60BPAddIndel)
 
-    assertMultiLoopout sWithSnp (Dna(repeat60BP), Dna(repeat60BPAddSnp))
+    assertMultiLoopout sWithIndel (Dna(repeat60BP), Dna(repeat60BPAddIndel))
 
     let randomDna200BP = "CCGATGAGGAACCCAAAAGGCGAACCGGGCCAGACAACCCGGCGGTATCGCACTCAAAGCCGGGACACGACGCGTCACAGCCGGTAAGAGTAACCCCGGAGTGAAGACCTATGGGGCTGGATAAAACTGCCGTGGTAACCGCCTTCAACAACCCGAATACGTGGCACTTCAGGAGGCGCCCGGAGGGGGGATGTTTTCTA"
 
