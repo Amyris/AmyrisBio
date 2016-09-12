@@ -1,7 +1,5 @@
 source https://nuget.org/api/v2
 
-nuget Chessie framework: >= net45
-
 group Build
   source https://nuget.org/api/v2
   

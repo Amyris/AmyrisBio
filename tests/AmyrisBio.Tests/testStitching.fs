@@ -4,7 +4,7 @@ open NUnit.Framework
 open Amyris.Dna
 open Amyris.Bio
 open Amyris.Bio.Stitching
-open Chessie.ErrorHandling
+open Amyris.ErrorHandling
 
 let rcStr (s: string) = s.ToCharArray() |> biolib.revComp |> String
    

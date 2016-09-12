@@ -2,7 +2,7 @@
 module Amyris.Bio.Stitching
 open biolib
 open Amyris.Dna
-open Chessie.ErrorHandling
+open Amyris.ErrorHandling
 open utils
 
 
