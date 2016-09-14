@@ -65,14 +65,14 @@ module smithWaterman =
             //printfn "No alignment"
             false, (seq1 |> arr2seq), (seq2 |> arr2seq), 0
         else
-            let medianOffset = hits.[hits.Length/2]
+            let modeOffset = hits |> Seq.countBy id |> Seq.maxBy snd |> fst //hits.[hits.Length/2].Value
             // Pad out the sequences so they roughly align
             let s1,s2 = 
-                if medianOffset > 0 then
-                    let s1 = Array.concat [ Array.create medianOffset ' '  ; seq1 ]
+                if modeOffset > 0 then
+                    let s1 = Array.concat [ Array.create modeOffset ' '  ; seq1 ]
                     (s1 , seq2)
                 else
-                    let s2 =  Array.concat [ Array.create (-medianOffset) ' ' ; seq2 ]
+                    let s2 =  Array.concat [ Array.create (-modeOffset) ' ' ; seq2 ]
                     seq1, s2
             let maxLen = max s1.Length s2.Length
         
