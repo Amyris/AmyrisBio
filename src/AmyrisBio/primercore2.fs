@@ -529,7 +529,11 @@ module primercore =
                     let posCloseness = 
                         (float(abs(l-mid))/pen.positionPenalty) + 
                         (match s.[r] with | 'G' | 'g' | 'C' | 'c' -> 0.0 | _ -> float(pen.ATPenalty) )
-                                
+                    
+                    // Banned CCCC in primer
+                    // http://www.pnas.org/content/93/22/12116.full.pdf
+                    let polyC = (arr2seq (s.[l..r])).Contains("CCCC")
+
                     let hasPoly = hasPolyrun (pen.polyLengthThreshold+1) (s.[l..r])
                     let threeP = if r-l+1 > 5 then threePrimeStable false (s.[l..r]) else false
                     // get average of all nucleotide specific penalties
@@ -540,7 +544,7 @@ module primercore =
                             (if threeP then 0.0 else pen.threePrimeUnstablePenalty) + 
                             (if hasPoly then pen.polyPenalty else 0.0) + 
                             seqP
-                    if abs(t - tTemp) <= pen.tmMaxDifference then
+                    if (abs(t - tTemp) <= pen.tmMaxDifference) && (not polyC) then
                         yield
                            {l = l ; 
                             r = r ; 
