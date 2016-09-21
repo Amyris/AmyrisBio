@@ -68,7 +68,7 @@ type Dna private (asArray:char [], rc: Dna option) =
     member x.GetSlice(start: int option, finish: int option) =
         let start = defaultArg start 0
         let finish = defaultArg finish (asArray.Length-1)
-        Dna(x.Subseq(start, finish), false)
+        Dna(asArray.[start..finish], None)
 
     interface IEnumerable<char> with
         member x.GetEnumerator() = (Seq.cast<char> asArray).GetEnumerator()
@@ -89,6 +89,11 @@ type Dna private (asArray:char [], rc: Dna option) =
         let finish = defaultArg finish (asArray.Length-1)
         ArraySegment(asArray, start, finish-start+1)
 
+    /// Split this DNA about a particular base pair.
+    /// The index provided will be the last base pair of the first half of the split.
+    member x.Split(endOfFirstPart) =
+        x.[..endOfFirstPart], x.[endOfFirstPart+1..]
+
     /// Return True if this DNA sequence ends with the provided sequence.
     member x.EndsWith(other: Dna) = x.str.EndsWith(other.str)
 
@@ -106,3 +111,11 @@ type Dna private (asArray:char [], rc: Dna option) =
             let rcDna = new Dna(rcArr, Some(x))
             revCompPartner <- Some(rcDna)
             rcDna
+
+[<AutoOpen>]
+module DnaOps =
+    let concat (seqs: seq<Dna>) =
+        seqs
+        |> Seq.map (fun s -> s.arr)
+        |> Array.concat
+        |> fun d -> Dna(d, false)

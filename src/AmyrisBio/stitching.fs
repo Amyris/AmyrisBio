@@ -31,8 +31,7 @@ type OverlapStitchResult =
 /// and will internally take the reverse complement of seq1 to find the overlap.
 /// The returned sequence will read in the sense direction of seq0.
 /// Any margin tails (for example, linkers) must be explicitly provided or stitching will fail.
-/// This function will check for exact overlap within the provided window,
-/// starting in the suggested hint direction to check.
+/// This function will check for exact overlap within the provided window.
 let overlapStitchWithMargins req =
     let minOverlap = int (defaultArg req.searchParams.minOverlap defaultMinOverlap)
         
@@ -113,14 +112,12 @@ let overlapStitchWithMargins req =
 type LoopoutSearchParams =
    {prefixSearchLength: int;
     minOverlap: uint64;
-    maxOverlap: uint64;
-    allowAnomaly: bool}
+    maxOverlap: uint64}
 
 let defaultLoopoutSearchParams =
    {prefixSearchLength = 8;
     minOverlap = 50UL;
-    maxOverlap = 500UL;
-    allowAnomaly = false}
+    maxOverlap = 500UL}
 
 type LoopoutResult =
     | NoLoopout

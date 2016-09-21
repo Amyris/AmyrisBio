@@ -31,3 +31,14 @@ let testDnaType() =
     Assert.AreEqual(d.[0..2], Dna("GAC"))
     Assert.AreEqual(d.[..2], Dna("GAC"))
     Assert.AreEqual(d.[98..], Dna("GC"))
+
+    // Check splitting
+    Assert.AreEqual(
+        (Dna("gacgcacactc"), Dna("ccttccttgaaaacgcacaatcatacaactgggcacataatgcgtacgcccatctaatacatccaactctctaggtcctgttcaagagc")),
+        d.Split(10))
+
+[<Test>]
+let testConcat() =
+    let pieces = [Dna("AAAGGTCCAT"); Dna("AGCACGTACA"); Dna("TCGCAACCTG")]
+    let d = concat pieces
+    Assert.AreEqual(d, Dna("AAAGGTCCATAGCACGTACATCGCAACCTG"))
