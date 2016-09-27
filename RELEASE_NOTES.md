@@ -1,3 +1,9 @@
+### v2.0.6 -- September 27, 2016
+* Small bug fix in ePCR.
+
+### v2.0.5 -- September 20, 2016
+* Small improvements to stitching module.
+
 ### v2.0.4 -- September 12, 2016
 * Added stitching module.
 
@@ -21,6 +27,3 @@
 
 ### v1.0.0 -- April 15, 2015
 * Initial NuGet release.
-
-
-

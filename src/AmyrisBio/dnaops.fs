@@ -129,7 +129,7 @@ module dnaops =
                 assert(s.ToUpper().[primerOffset..primerOffset+fwd.Length-1] = fwd.ToUpper())
                 match s.IndexOf(revRev.ToUpper()) with
                 | -1 -> None
-                | i when i > (100+primerOffset) -> 
+                | i when i >= (fwd.Length+primerOffset) -> 
                     Some({template = s ;
                           chr = chr; 
                           chrFrom = cOff ; 
