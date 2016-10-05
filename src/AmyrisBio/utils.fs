@@ -281,14 +281,25 @@ module utils =
     
     /// Wrap DNA sequence at 60 chars per line
     let format60 (a:char[]) =
-        let res = new System.Text.StringBuilder()
-        let rec wrap (a : char []) =
-            if a.Length < 60 then res.Append(a) 
+        let newLinesRequired = (a.Length / 60) + (if a.Length%60=0 then 0 else 1) // final row requires a newline if not empty
+        let res = Array.init (a.Length+newLinesRequired) (fun _ -> 'X')
+
+        let rec move i j n =
+            if i = a.Length then
+                if n = 0 then
+                    assert (j=res.Length)
+                else
+                    res.[j]<-'\n'
+                    assert (j+1=res.Length)
+                res
             else
-                res.Append(a.[..59]) |> ignore
-                res.Append("\n") |> ignore
-                wrap (a.[60..])
-        (wrap a).ToString()
+                if n=60 then
+                    res.[j]<-'\n' // System.Environment.NewLine
+                    move i (j+1) 0
+                else
+                    res.[j]<-a.[i]
+                    move (i+1) (j+1) (n+1)
+        move 0 0 0
     
     /// Given a file path f with contents
     /// key = value
