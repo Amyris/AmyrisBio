@@ -34,7 +34,7 @@ module MerHash =
     *)
 
 
-    let encDNA (b : char) =
+    let inline encDNA (b : char) =
         match b with
             | 'G' | 'g' -> 0uL
             | 'A' | 'a' -> 1uL
@@ -44,7 +44,7 @@ module MerHash =
                 randBase <- randBase + 1
                 (randBase % 4) |> uint64
 
-    let encCompDNA (b : char) =
+    let inline encCompDNA (b : char) =
         match b with
             | 'G' | 'g' -> 3uL
             | 'A' | 'a' -> 2uL
@@ -159,5 +159,66 @@ module MerHash =
                                     | 4uy -> SKIPPEDTWICE
                                     | _ as x -> failwithf "Invalid hash value %d\n" x
 
-
     end
+    /// Encode first N bases of DNA in string template as 64 bit uint
+    let hashFirstN n (template:string) =
+        seq { for i in 0..n-1 -> uint64(encDNA (template.[i])) <<< ((n-i-1)*2) } |> Seq.sum
+
+    /// Encode revcomp of (first N bases of DNA in string template) as 64 bit uint
+    let hashRCFirstN n (template:string) =
+        seq { for i in 0..n-1 -> uint64(encCompDNA (template.[i])) <<< (i*2) } |> Seq.sum
+
+    /// Create hash table with fwd/rev encoding into merhash with mer size 32 bases
+    let hashTemplate32 hSize (dna:string) =
+        let mer = 32
+        let hash = MerHash(hSize)
+
+        // Pattern for processing a DNA sequence dna (char array)
+        // NB - assumes 32 bit mer size, otherwise a bit mask is needed after bit shift
+
+        let init = hashFirstN mer dna
+        let initRC = hashRCFirstN mer dna
+
+        let totalMerCount = dna.Length-mer+1
+        let rcMult = 1uL<<<((mer-1)*2)
+        let rcC = 0uL //C revcomp to G 
+        let rcG = 3uL*rcMult // revcomp G to C
+        let rcA = 2uL*rcMult // revcomp A to T
+        let rcT = 1uL*rcMult // revcomp T to A
+
+        let rec procDNA count i (v:uint64) (v2:uint64) =
+            hash.insert(min v v2)
+            if count = 0 then ()
+            else
+                procDNA (count-1) (i+1) 
+                    ((v <<< 2) ||| uint64(match dna.[i] with |'G' -> 0uy | 'A' -> 1uy | 'T' -> 2uy | 'C' -> 3uy | _ -> failwithf "Bad base '%c'" (dna.[i]) ))
+                    ((v2 >>>2) ||| uint64(match dna.[i] with |'C' -> rcC | 'T' -> rcT | 'A' -> rcA | 'G' -> rcG | _ -> failwithf "Bad base '%c'" (dna.[i]) ))
+
+        procDNA (totalMerCount-1) (mer) init initRC
+        hash
+    /// Search in hash h for query string,  reverse or fwd.   Return ONCE/TWICE , position in query for first hit
+    /// or NONE,-1 if no hit
+    let search32 (h:MerHash) (query:string) =
+        let mer = 32
+        let init = hashFirstN mer query
+        let initRC = hashRCFirstN mer query
+
+        let totalMerCount = query.Length-mer+1
+        let rcMult = 1uL<<<((mer-1)*2)
+        let rcC = 0uL //C revcomp to G 
+        let rcG = 3uL*rcMult // revcomp G to C
+        let rcA = 2uL*rcMult // revcomp A to T
+        let rcT = 1uL*rcMult // revcomp T to A
+
+        let rec _search count position v1 v2 =
+            match h.check (min v1 v2) with
+                | ONCE -> ONCE,(position-mer)
+                | TWICE -> TWICE,(position-mer)
+                | NONE ->
+                    if count = 0 then
+                        NONE,-1
+                    else
+                        _search (count-1) (position+1) 
+                            ((v1 <<< 2) ||| uint64(match query.[position] with |'G' -> 0uy | 'A' -> 1uy | 'T' -> 2uy | 'C' -> 3uy | _ -> failwithf "Bad base '%c'" (query.[position]) ))
+                            ((v2 >>>2) ||| uint64(match query.[position] with |'C' -> rcC | 'T' -> rcT | 'A' -> rcA | 'G' -> rcG | _ -> failwithf "Bad base '%c'" (query.[position]) ))
+        _search (totalMerCount-1) mer init initRC

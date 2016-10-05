@@ -73,12 +73,10 @@ module SequenceSearch =
                                  targetChr=""})
                             |> List.ofSeq
                         // mask their sequence on the target string, and build a new suffix tree
-                        printfn "All matches: %A" allMatches
                         let maskedTargetSeqString =
                             allMatches
                             |> Seq.fold
                                 (fun (prevSeq:string) l ->
-                                      printfn "######\nEverything relevant:\n%A\n%A\n%A" (prevSeq.Length) l longestMatchLength
                                       (prevSeq.[..(l-1)]
                                     + (Array.create longestMatchLength '#' |> arr2seq)
                                     + prevSeq.[(l+longestMatchLength)..]))

@@ -111,8 +111,8 @@ module smithWaterman =
                         // Assuming we're still in the sequence we're matching
                         if x+y < s1b.Length then
                             match s1b.[x + y],s2b.[y] with
-                            | _,' ' -> upLeft
-                            | ' ', _ -> upLeft
+                            | _,' ' ->  upLeft+mismatchCost
+                            | ' ', _ -> upLeft+mismatchCost
                             | a,b when a=b -> upLeft + matchCost
                             | a,b when a<>b -> upLeft + mismatchCost
                             | _ -> upLeft - matchCost // This shouldn't happen really but penalize..
@@ -202,6 +202,14 @@ module smithWaterman =
         
             let align1 : ResizeArray<char>  = new ResizeArray<char>()
             let align2 : ResizeArray<char>  = new ResizeArray<char>()
+
+            let rec skipLeadingSpaces i (a:char [])  (b:char []) =
+                if i >=a.Length then
+                    i
+                elif a.[i] = ' ' && b.[i] = ' ' then
+                    skipLeadingSpaces (i+1) a b
+                else
+                    i
             let _,_ = traceback bestI bestJ (align1,align2)  
             let rev (s:string) =
                 s.ToCharArray()
@@ -212,11 +220,18 @@ module smithWaterman =
             //printfn "%s\n%s" align1 align2                  
             //let time3 = DateTime.Now    
         
-            let ret = 
-                (true,
-                 (align1 |> Array.ofSeq |> arr2seq |> rev),
-                 (align2 |> Array.ofSeq |> arr2seq |> rev),
-                 best)
+            let a1 = align1.ToArray()
+            let a2 = align2.ToArray()
+
+            let firstNonSpace = skipLeadingSpaces 0 a1 a2
+            let ret =
+                if firstNonSpace >= a1.Length then 
+                    ( true,"","",best)
+                else
+                    (true,
+                     (a1.[firstNonSpace..] |> arr2seq |> rev),
+                     (a2.[firstNonSpace..] |> arr2seq |> rev),
+                     best)
             //let time4 = DateTime.Now    
 //            let t1 = time1 - time0
 //            let t2 = time2 - time1
