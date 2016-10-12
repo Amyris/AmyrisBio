@@ -1,3 +1,6 @@
+### v2.0.6 -- October 12, 2016
+* merhash functions added, pileup format parser added
+
 ### v2.0.6 -- September 27, 2016
 * Small bug fix in ePCR.
 
