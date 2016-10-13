@@ -4,10 +4,10 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("AmyrisBio")>]
 [<assembly: AssemblyProductAttribute("AmyrisBio")>]
 [<assembly: AssemblyDescriptionAttribute("Amyris FSharp BioLib")>]
-[<assembly: AssemblyVersionAttribute("2.0.6")>]
-[<assembly: AssemblyFileVersionAttribute("2.0.6")>]
+[<assembly: AssemblyVersionAttribute("2.0.7")>]
+[<assembly: AssemblyFileVersionAttribute("2.0.7")>]
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] Version = "2.0.6"
-    let [<Literal>] InformationalVersion = "2.0.6"
+    let [<Literal>] Version = "2.0.7"
+    let [<Literal>] InformationalVersion = "2.0.7"
