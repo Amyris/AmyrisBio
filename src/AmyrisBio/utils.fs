@@ -291,7 +291,7 @@ module utils =
                 else
                     res.[j]<-'\n'
                     assert (j+1=res.Length)
-                res
+                res |> arr2seq
             else
                 if n=60 then
                     res.[j]<-'\n' // System.Environment.NewLine

@@ -1,3 +1,6 @@
+### v2.0.8 -- October 13, 2016
+* utils.format60 reverting return type to string
+
 ### v2.0.7 -- October 12, 2016
 * merhash functions added, pileup format parser added
 
