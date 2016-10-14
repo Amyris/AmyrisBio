@@ -1,3 +1,6 @@
+### v2.0.9 -- October 14, 2016
+* BUG: MerHash not wrapping correctly for end of array searches
+
 ### v2.0.8 -- October 13, 2016
 * utils.format60 reverting return type to string
 

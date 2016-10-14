@@ -122,8 +122,8 @@ module MerHash =
                         | SKIPPED -> ONCE
                         | SKIPPEDTWICE -> TWICE
                 else match hash2.[i] with
-                        | SKIPPED -> search (i+1)
-                        | SKIPPEDTWICE -> search (i+1)
+                        | SKIPPED -> search (if i+1=hash1.Length then 0 else i+1)
+                        | SKIPPEDTWICE -> search (if i+1=hash1.Length then 0 else i+1)
                         | _ -> NONE
 
 
