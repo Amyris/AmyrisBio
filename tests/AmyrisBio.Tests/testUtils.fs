@@ -22,18 +22,26 @@ let testPaddedZip() =
 
 [<Test>]
 let testFormat60() =
-    Assert.AreEqual("", format60 [||])
-    Assert.AreEqual("A", format60 [|'A'|])
-    Assert.AreEqual("AT", format60 [|'A'; 'T'|])
+    let check a b = Assert.AreEqual(a, format60 b)
+    check "" [||]
+    check "A" [|'A'|]
+    check "AT" [|'A'; 'T'|]
 
-    let A59 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    let aArray n = Array.create n 'A'
 
-    let A60 = A59 + "A"
-    let A60TrailingNewline = A60 + "\n"
-    let A60Arr = [|for c in A60 -> c|]
+    let A59Arr = aArray 59
+    let A59 = arr2seq A59Arr
 
-    let A61Arr = Array.append A60Arr [|'A'|]
+    let A60Arr = aArray 60
+    let A60 = arr2seq A60Arr
+
+    let A61Arr = aArray 61
     let A61Result = A60 + "\nA"
+    let A120Result = A60 + "\n" + A60
+    let A121Result = A120Result + "\nA"
 
-    Assert.AreEqual(A60TrailingNewline, format60 A60Arr)
-    Assert.AreEqual(A61Result, format60 A61Arr)
+    check A59 A59Arr
+    check A60 A60Arr
+    check A61Result A61Arr
+    check A120Result (aArray 120)
+    check A121Result (aArray 121)

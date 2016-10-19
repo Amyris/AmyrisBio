@@ -283,8 +283,8 @@ module utils =
     let format60 (a:char[]) =
         if a.Length = 0 then ""
         else
-            let newLinesRequired = a.Length / 60
-            let res = Array.init (a.Length+newLinesRequired) (fun _ -> '\n')
+            let newLinesRequired = ((a.Length - 1) / 60) |> max 0
+            let res = Array.create (a.Length + newLinesRequired) '\n'
 
             /// i = index into input array
             /// j = index into output array
