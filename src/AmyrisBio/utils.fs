@@ -281,25 +281,23 @@ module utils =
     
     /// Wrap DNA sequence at 60 chars per line
     let format60 (a:char[]) =
-        let newLinesRequired = (a.Length / 60) + (if a.Length%60=0 then 0 else 1) // final row requires a newline if not empty
-        let res = Array.init (a.Length+newLinesRequired) (fun _ -> 'X')
+        if a.Length = 0 then ""
+        else
+            let newLinesRequired = a.Length / 60
+            let res = Array.init (a.Length+newLinesRequired) (fun _ -> '\n')
 
-        let rec move i j n =
-            if i = a.Length then
-                if n = 0 then
-                    assert (j=res.Length)
-                else
-                    res.[j]<-'\n'
-                    assert (j+1=res.Length)
-                res |> arr2seq
-            else
-                if n=60 then
-                    res.[j]<-'\n' // System.Environment.NewLine
+            /// i = index into input array
+            /// j = index into output array
+            /// n = character count % 60
+            let rec move i j n =
+                if i = a.Length then
+                    res |> arr2seq
+                elif n = 60 then
                     move i (j+1) 0
                 else
                     res.[j]<-a.[i]
                     move (i+1) (j+1) (n+1)
-        move 0 0 0
+            move 0 0 0
     
     /// Given a file path f with contents
     /// key = value
