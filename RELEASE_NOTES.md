@@ -1,3 +1,6 @@
+### v2.0.10 -- October 18, 2016
+* BUG: revert behavior of format60 with new performance boost
+
 ### v2.0.9 -- October 14, 2016
 * BUG: MerHash not wrapping correctly for end of array searches
 
