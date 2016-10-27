@@ -18,8 +18,8 @@ module sgd =
 
     let chrLookup = Map.ofSeq lookup 
 
-    /// Should be replaced by Amyris.biolib.readReference
     [<Obsolete>]
+    /// Should be replaced by Amyris.biolib.readReference
     let readReference (path:string) =
         use f = new StreamReader(path)
         //let chrs = File.ReadAllText(path).Split([|'>'|]) |> Seq.filter (fun seq -> seq.Length > 0 )
