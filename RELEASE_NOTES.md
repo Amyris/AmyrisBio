@@ -1,3 +1,6 @@
+### v2.0.11 -- November 10, 2016
+* ENH: promote a bunch of error handling helpers to Amyris.ErrorHandling.
+
 ### v2.0.10 -- October 18, 2016
 * BUG: revert behavior of format60 with new performance boost
 
