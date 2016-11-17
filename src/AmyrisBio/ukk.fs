@@ -561,19 +561,52 @@ module SuffixTree =
     /// Disk based tree access scheme that doesn't have a high startup cost loading tree into memory
     type SuffixTreeDisk(path:string) = class
         let size = FileInfo(path).Length
-        let mapName =
-            sprintf "gslc_st_%d_%s_%s"
-                (System.Diagnostics.Process.GetCurrentProcess().Id)
-                (System.DateTime.Now.ToLongDateString())
-                (System.DateTime.Now.ToLongTimeString())
+//        let mapName =
+//            sprintf "gslc_st_%d_%s_%s"
+//                (System.Diagnostics.Process.GetCurrentProcess().Id)
+//                (System.DateTime.Now.ToLongDateString())
+//                (System.DateTime.Now.ToLongTimeString())
+        
         let openMM path = 
             // TODO - this is not going to share nicely between processes.  We should ideally share the
             // actual memory map between concurrent compiler sessions.  At the moment, the second user
             // will get a locking error ;(
-            MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path,FileMode.Open,mapName,size)
+            (*
+            Example with shared access
+                 return MemoryMappedFile.CreateFromFile(
+               //include a readonly shared stream
+               File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read),
+               //not mapping to a name
+               null,
+               //use the file's actual size
+               0L, 
+               //read only access
+               MemoryMappedFileAccess.Read, 
+               //not configuring security
+               null,
+               //adjust as needed
+               HandleInheritability.None,
+               //close the previously passed in stream when done
+               false);
+            *)
+            //MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path,FileMode.Open,mapName,size)
+            MemoryMappedFiles.MemoryMappedFile.CreateFromFile(
+                                                    File.Open(path,FileMode.Open,FileAccess.Read,FileShare.Read),
+                                                    // not mapping to a name
+                                                    null,
+                                                    // use the file's actual size
+                                                    0L,
+                                                    // read only access
+                                                    MemoryMappedFiles.MemoryMappedFileAccess.Read,
+                                                    // not configuring security
+                                                    null,
+                                                    HandleInheritability.None,
+                                                    false
+                                                  )
 
         let mm = openMM path
-        let va = mm.CreateViewAccessor()
+
+        let va = mm.CreateViewAccessor(0L,0L,MemoryMappedFiles.MemoryMappedFileAccess.Read)
         let headerBytes : byte array = Array.zeroCreate 8
         
         do
