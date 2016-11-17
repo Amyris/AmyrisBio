@@ -1,5 +1,6 @@
 ﻿/// Contains error propagation functions and a computation expression builder for Railway-oriented programming.
 /// Source code from the Chessie package dropped here verbatim rather than adding a dep.
+/// A number of additional helper functions have been added as well.
 namespace Amyris.ErrorHandling
 
 open System
@@ -79,27 +80,44 @@ module Trial =
             |> failwith
         either fst raiseExn result
 
-    /// Appends the given messages with the messages in the given result.
+    /// Appends the given messages to the messages in the given result.
     let inline mergeMessages msgs result = 
-        let inline fSuccess (x, msgs2) = Ok(x, msgs @ msgs2)
+        let inline fSuccess (x, msgs2) = Ok(x, msgs2 @ msgs)
         let inline fFailure errs = Bad(errs @ msgs)
         either fSuccess fFailure result
 
+    /// Promote a function that cannot fail to one which always produces Ok.
+    /// This allows a function to be naturally used with bind pipelines.
+    let inline promote f x = ok (f x)
+
     /// If the result is a Success it executes the given function on the value.
-    /// Otherwise the exisiting failure is propagated.
+    /// Otherwise the exisiting failure is propagated.  Any messages present
+    /// on the input are merged into the output stream.
     let inline bind f result = 
         let inline fSuccess (x, msgs) = f x |> mergeMessages msgs
         let inline fFailure (msgs) = Bad msgs
         either fSuccess fFailure result
 
-   /// Flattens a nested result given the Failure types are equal
-    let inline flatten (result : Result<Result<_,_>,_>) =
-        result |> bind id
-
     /// If the result is a Success it executes the given function on the value. 
     /// Otherwise the exisiting failure is propagated.
-    /// This is the infix operator version of ErrorHandling.bind
+    /// This is the infix operator version of ErrorHandling.bind.
+    /// This operator essentially acts like |> but for Result streams.
     let inline (>>=) result f = bind f result
+
+    /// <summary>
+    /// Error pipeline function composition operator.
+    /// This operator is very comparable to ">>", the regular function composition operator,
+    /// but composes together two functions that operate on a normal value and return a result.
+    /// Useful for creating chains of functions that all operate on a data entity in series.
+    /// If one operation fails, all further operations fail and the errors are passed through.
+    /// As an analogy, this infix operator essentially acts like >> except for functions that
+    /// produce Result.
+    /// </summary>
+    let inline (>=>) f1 f2 = f1 >> (bind f2)
+
+    /// Flattens a nested result given the Failure types are equal
+    let inline flatten (result : Result<Result<_,_>,_>) =
+        result |> bind id
 
     /// If the wrapped function is a success and the given result is a success the function is applied on the value. 
     /// Otherwise the exisiting error messages are propagated.
@@ -181,6 +199,83 @@ module Trial =
       match result with
       | Warn (_,msgs) -> Bad msgs
       | _             -> result 
+
+    /// Combine the results of two result-producing functions in some fashion.
+    let inline combineResults combineFunction a b =
+        match a, b with
+        | Ok(va, msgsA), Ok(vb, msgsB) -> Ok(combineFunction va vb, msgsA@msgsB)
+        | Bad(msgsA), Ok(_, msgsB) 
+        | Ok(_, msgsA), Bad(msgsB)
+        | Bad(msgsA), Bad(msgsB) -> Bad(msgsA@msgsB)
+
+    /// Combine two results as a tuple.
+    let inline tupleResults a b = combineResults (fun a b -> (a, b)) a b
+
+    /// Combine three results as a tuple.
+    let inline tupleResults3 a b c =
+        let firstTwo = tupleResults a b
+        combineResults (fun (a, b) c -> (a, b, c)) firstTwo c
+
+    /// <summary>
+    /// Validation functions are those which produce unit and possibly
+    /// warnings on success, and errors on failure.
+    /// Therefore, we can combine two of them by throwing away both of
+    /// their success values and replacing them with unit.
+    ///</summary>
+    let inline combineValidationResults a b = combineResults (fun _ _ -> ()) a b
+
+
+    ///<summary>
+    /// Combine two validation functions into a single validation function.
+    /// Used for performing many validations and combining them as a single result.
+    /// Can be chained to combine arbitrarily many.  Every validation in the chain will
+    /// be performed, and all results combined.  Result is only ok if all are.
+    ///</summary>
+    let inline combineValidations va vb x = combineValidationResults (va x) (vb x)
+
+    /// Infix version of combination function.
+    let (&&&) = combineValidations
+
+
+    /// Collect a sequence of validation results into a single result.
+    let inline collectValidations v = Seq.reduce combineValidationResults v
+
+    /// <summary>
+    /// Given a result of a particular message type, map each message to a different type
+    /// using a provided function.  Useful for promoting simple string messages to a better domain
+    /// type.
+    /// </summary>
+    let inline mapMessages f r =
+        match r with
+        | Ok(v, msgs) -> Ok(v, msgs |> List.map f)
+        | Bad(msgs) -> Bad(msgs |> List.map f)
+
+    /// If an incoming result is a failure, append a second error message to it to provide context
+    /// for the prior error.
+    let inline addContextIfError err r =
+        let inline addError errs = Bad(errs@[err])
+        either Ok addError r
+
+    /// Capture an exception into a result stream using a function that maps the exception into
+    /// a message.
+    let inline captureException exceptionMapper f x =
+        try
+            ok (f x)
+        with e ->
+            fail (exceptionMapper e)
+
+    /// Apply a result-generating function to an optional value.
+    /// Turn the result inside-out to put the option on the inside of the result.
+    let inline optionalResult f x =
+        let result =
+            match x with
+            | Some(v) -> Some(f v)
+            | None -> None
+
+        match result with
+        | Some(Ok(r, msgs)) -> Ok(Some r, msgs)
+        | Some(Bad(errs)) -> Bad(errs)
+        | None -> Ok(None, [])
 
     /// Builder type for error handling computation expressions.
     type TrialBuilder() = 
