@@ -40,5 +40,5 @@ let testDnaType() =
 [<Test>]
 let testConcat() =
     let pieces = [Dna("AAAGGTCCAT"); Dna("AGCACGTACA"); Dna("TCGCAACCTG")]
-    let d = concat pieces
+    let d = DnaOps.concat pieces
     Assert.AreEqual(d, Dna("AAAGGTCCATAGCACGTACATCGCAACCTG"))

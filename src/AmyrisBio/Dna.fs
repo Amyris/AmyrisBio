@@ -6,6 +6,11 @@ open System.Collections.Generic
 open biolib
 open utils
 
+/// Is a given DNA sequence allowed to have ambiguous bases or not?
+type SequenceSemantics =
+    | Explicit
+    | AllowAmbiguousBases
+
  // NOTE: this domain type was added quite some time after much of this package was developed.
 // As such, most functions are written in terms of either char [] or string, while only a few
 // newer ones are written in terms of Dna.  Ideally, new development should leverage this type
@@ -18,7 +23,7 @@ open utils
 /// This data structure is absolutely not thread safe due to lazy memoization.  A function
 /// that fills in all the memoizations would make the data structure thread-safe after it
 /// returns.
-type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
+type Dna private (asArray:char [], rc: Dna option, mode: SequenceSemantics) =
     // TODO: refactor this class to use ImmutableArray rather than Array.  At the moment
     // clients could shoot themselves in the foot by mutating the array contents, or feeding
     // it to a function that mutates it.
@@ -27,10 +32,10 @@ type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
     let mutable asString: string option = None
     let mutable revCompPartner: Dna option = rc
 
-    new(sequence, ?validate, ?allowAmbiguousBases) =
+    new(sequence, ?validate, ?mode) =
         let doValidate = defaultArg validate true
-        let allowAmbiguous = defaultArg allowAmbiguousBases false
-        let baseCheck = if allowAmbiguous then isDnaBase else isDnaBaseStrict
+        let mode = defaultArg mode Explicit
+        let baseCheck = match mode with | AllowAmbiguousBases -> isDnaBase | Explicit -> isDnaBaseStrict
         if doValidate then
             let badChars =
                 sequence
@@ -43,10 +48,11 @@ type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
             sequence
             |> (if doValidate then Seq.map (fun (c: char) -> System.Char.ToUpper(c)) else id)
             |> Array.ofSeq
-        Dna(seqArr, None, allowAmbiguous)
+        Dna(seqArr, None, mode)
+
 
     with
-    member x.AllowsAmbiguous = allowAmbiguousBases
+    member x.SemanticMode = mode
     /// Return the char array representation of this DNA payload.
     /// Client code shouldn't need to call this except for interop with older functions.
     member x.arr = asArray
@@ -71,18 +77,30 @@ type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
     member x.GetSlice(start: int option, finish: int option) =
         let start = defaultArg start 0
         let finish = defaultArg finish (asArray.Length-1)
-        Dna(asArray.[start..finish], None, allowAmbiguousBases)
+        Dna(asArray.[start..finish], None, mode)
 
     interface IEnumerable<char> with
         member x.GetEnumerator() = (Seq.cast<char> asArray).GetEnumerator()
     interface IEnumerable with
         member x.GetEnumerator() = asArray.GetEnumerator()
 
+    interface IEquatable<Dna> with
+        member x.Equals(other) = x.arr = other.arr
+
     // Implement equality between similiar types
     override x.Equals(other) =
         match other with
         | :? Dna as o -> x.arr = o.arr
         | _ -> false
+
+    interface IComparable with
+        member x.CompareTo(other) =
+            match other with
+            | null -> 1
+            | :? Dna as o -> compare x.arr o.arr
+            | _ -> invalidArg "other" "not an instance of Dna"
+    interface IComparable<Dna> with
+        member x.CompareTo(other) = compare x.arr other.arr
 
     // Implement hash as hash of the underlying sequence, ignoring memoization.
     override x.GetHashCode() = asArray.GetHashCode()
@@ -115,24 +133,40 @@ type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
         | Some(rc) -> rc
         | None ->
             let rcArr = revComp asArray
-            let rcDna = new Dna(rcArr, Some(x), allowAmbiguousBases)
+            let rcDna = new Dna(rcArr, Some(x), mode)
             revCompPartner <- Some(rcDna)
             rcDna
 
-[<AutoOpen>]
 module DnaOps =
+    /// Determine what combined mode a set of Dna sequences should have.
+    let private combinedMode (seqs: seq<Dna>) =
+        seqs
+        |> Seq.fold
+            (fun accumMode s ->
+                match accumMode, s.SemanticMode with
+                | AllowAmbiguousBases, _ -> AllowAmbiguousBases
+                | _, AllowAmbiguousBases -> AllowAmbiguousBases
+                | Explicit, Explicit -> Explicit)
+            Explicit
     /// Concatentate a sequence of Dna types into a single, new Dna type.
     /// If any of the sequences allow ambiguous bases, the resulting Dna type will as well.
     let concat (seqs: seq<Dna>) =
-        let allowAmbiguous = seqs |> Seq.exists (fun d -> d.AllowsAmbiguous)
         seqs
         |> Seq.map (fun s -> s.arr)
         |> Array.concat
-        |> fun d -> Dna(d, false, allowAmbiguous)
+        |> fun d -> Dna(d, false, combinedMode seqs)
 
     /// Append a Dna type to a second Dna type.
     let append (a: Dna) (b: Dna) =
-        let allowAmbiguous = a.AllowsAmbiguous || b.AllowsAmbiguous
         Array.append a.arr b.arr
-        |> fun d -> Dna(d, false, allowAmbiguous)
+        |> fun d -> Dna(d, false, combinedMode [a; b])
     
+    /// Pipelineable call to reverse complement a piece of DNA.
+    let revComp (a: Dna) = a.RevComp()
+
+    let codon2aa (codon: Dna) = codon2aa codon.arr
+
+module DnaConstants =
+    let codons =
+        biolib.codons
+        |> Array.map (fun codon -> Dna(codon))
