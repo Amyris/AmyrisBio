@@ -81,7 +81,8 @@ type Dna private (asArray:char [], rc: Dna option) =
         | :? Dna as o -> x.arr = o.arr
         | _ -> false
 
-    // TODO: might want to implement hash code by hashing the sequence
+    // Implement hash as hash of the underlying sequence, ignoring memoization.
+    override x.GetHashCode() = asArray.GetHashCode()
 
     /// Return a view of a slice of this DNA sequence.
     /// Start and finish are both inclusive indices.
@@ -114,8 +115,15 @@ type Dna private (asArray:char [], rc: Dna option) =
 
 [<AutoOpen>]
 module DnaOps =
+    /// Concatentate a sequence of Dna types into a single, new Dna type.
     let concat (seqs: seq<Dna>) =
         seqs
         |> Seq.map (fun s -> s.arr)
         |> Array.concat
         |> fun d -> Dna(d, false)
+
+    /// Append a Dna type to a second Dna type.
+    let append (a: Dna) (b: Dna) =
+        Array.append a.arr b.arr
+        |> fun d -> Dna(d, false)
+    

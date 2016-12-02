@@ -1,3 +1,6 @@
+### v2.0.13 -- December 2, 2016
+* Add hashing and append to Dna domain type.
+
 ### v2.0.12 -- November 16, 2016
 * ENH: SuffixTreeDisk allows parallel access under windows
 
