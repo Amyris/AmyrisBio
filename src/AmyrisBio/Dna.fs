@@ -18,7 +18,7 @@ open utils
 /// This data structure is absolutely not thread safe due to lazy memoization.  A function
 /// that fills in all the memoizations would make the data structure thread-safe after it
 /// returns.
-type Dna private (asArray:char [], rc: Dna option) =
+type Dna private (asArray:char [], rc: Dna option, allowAmbiguousBases: bool) =
     // TODO: refactor this class to use ImmutableArray rather than Array.  At the moment
     // clients could shoot themselves in the foot by mutating the array contents, or feeding
     // it to a function that mutates it.
@@ -27,12 +27,14 @@ type Dna private (asArray:char [], rc: Dna option) =
     let mutable asString: string option = None
     let mutable revCompPartner: Dna option = rc
 
-    new(sequence, ?validate) =
-        let doValidate = match validate with | Some(v) -> v | None -> true
+    new(sequence, ?validate, ?allowAmbiguousBases) =
+        let doValidate = defaultArg validate true
+        let allowAmbiguous = defaultArg allowAmbiguousBases false
+        let baseCheck = if allowAmbiguous then isDnaBase else isDnaBaseStrict
         if doValidate then
             let badChars =
                 sequence
-                |> Seq.filter (fun c -> not (isDnaBaseStrict c))
+                |> Seq.filter (fun c -> not (baseCheck c))
                 |> Array.ofSeq
             if badChars.Length > 0 then
                 failwithf "Found bad chars in DNA string: %A" badChars
@@ -41,9 +43,10 @@ type Dna private (asArray:char [], rc: Dna option) =
             sequence
             |> (if doValidate then Seq.map (fun (c: char) -> System.Char.ToUpper(c)) else id)
             |> Array.ofSeq
-        Dna(seqArr, None)
+        Dna(seqArr, None, allowAmbiguous)
 
     with
+    member x.AllowsAmbiguous = allowAmbiguousBases
     /// Return the char array representation of this DNA payload.
     /// Client code shouldn't need to call this except for interop with older functions.
     member x.arr = asArray
@@ -68,7 +71,7 @@ type Dna private (asArray:char [], rc: Dna option) =
     member x.GetSlice(start: int option, finish: int option) =
         let start = defaultArg start 0
         let finish = defaultArg finish (asArray.Length-1)
-        Dna(asArray.[start..finish], None)
+        Dna(asArray.[start..finish], None, allowAmbiguousBases)
 
     interface IEnumerable<char> with
         member x.GetEnumerator() = (Seq.cast<char> asArray).GetEnumerator()
@@ -101,6 +104,9 @@ type Dna private (asArray:char [], rc: Dna option) =
     /// Return True if this DNA sequence starts with the provided sequence.
     member x.StartsWith(other: Dna) = x.str.StartsWith(other.str)
 
+    /// Return True if this DNA sequence contains the provided sequence.
+    member x.Contains(other: Dna) = x.str.Contains(other.str)
+
     member x.Length = asArray.Length
 
     /// Get the reverse compliment of this sequence.
@@ -109,21 +115,24 @@ type Dna private (asArray:char [], rc: Dna option) =
         | Some(rc) -> rc
         | None ->
             let rcArr = revComp asArray
-            let rcDna = new Dna(rcArr, Some(x))
+            let rcDna = new Dna(rcArr, Some(x), allowAmbiguousBases)
             revCompPartner <- Some(rcDna)
             rcDna
 
 [<AutoOpen>]
 module DnaOps =
     /// Concatentate a sequence of Dna types into a single, new Dna type.
+    /// If any of the sequences allow ambiguous bases, the resulting Dna type will as well.
     let concat (seqs: seq<Dna>) =
+        let allowAmbiguous = seqs |> Seq.exists (fun d -> d.AllowsAmbiguous)
         seqs
         |> Seq.map (fun s -> s.arr)
         |> Array.concat
-        |> fun d -> Dna(d, false)
+        |> fun d -> Dna(d, false, allowAmbiguous)
 
     /// Append a Dna type to a second Dna type.
     let append (a: Dna) (b: Dna) =
+        let allowAmbiguous = a.AllowsAmbiguous || b.AllowsAmbiguous
         Array.append a.arr b.arr
-        |> fun d -> Dna(d, false)
+        |> fun d -> Dna(d, false, allowAmbiguous)
     

@@ -1,3 +1,7 @@
+### v2.0.14 -- December 2, 2016
+* Add contains function to Dna.
+* Allow Dna type to optionally accept ambiguous base identifiers.
+
 ### v2.0.13 -- December 2, 2016
 * Add hashing and append to Dna domain type.
 
