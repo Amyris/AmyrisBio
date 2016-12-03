@@ -125,12 +125,6 @@ type Dna private (asArray:char [], rc: Dna option, mode: SequenceSemantics) =
     /// Return True if this DNA sequence contains the provided sequence.
     member x.Contains(other: Dna) = x.str.Contains(other.str)
 
-    /// Return the index of the first appearence of this substring.
-    member x.IndexOf(substr: string) = x.str.IndexOf(substr)
-
-    /// Return the index of the first appearence of this character.
-    member x.IndexOf(c: char) = x.str.IndexOf(c)
-
     member x.Length = asArray.Length
 
     /// Get the reverse compliment of this sequence.
