@@ -125,6 +125,12 @@ type Dna private (asArray:char [], rc: Dna option, mode: SequenceSemantics) =
     /// Return True if this DNA sequence contains the provided sequence.
     member x.Contains(other: Dna) = x.str.Contains(other.str)
 
+    /// Return the index of the first appearence of this substring.
+    member x.IndexOf(substr: string) = x.str.IndexOf(substr)
+
+    /// Return the index of the first appearence of this character.
+    member x.IndexOf(c: char) = x.str.IndexOf(c)
+
     member x.Length = asArray.Length
 
     /// Get the reverse compliment of this sequence.
@@ -164,7 +170,17 @@ module DnaOps =
     /// Pipelineable call to reverse complement a piece of DNA.
     let revComp (a: Dna) = a.RevComp()
 
+    /// Helper function to return reverse complement depending on a conditional.
+    let revCompIf condition (a: Dna) = if condition then a.RevComp() else a
+
+    // These functions are here to enable clients to use functions exclusively in the Dna type domain
+    // without needed to manually reach into the DNA type.  Adding aliases here rather than calling
+    // the original versions of these functions should ease refactoring of the base functions later.
+
     let codon2aa (codon: Dna) = codon2aa codon.arr
+
+    /// Translate DNA to AA 3 bases at a time.
+    let translate (s: Dna) = translate s.arr
 
 module DnaConstants =
     let codons =
