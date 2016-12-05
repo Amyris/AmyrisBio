@@ -125,6 +125,20 @@ type Dna private (asArray:char [], rc: Dna option, mode: SequenceSemantics) =
     /// Return True if this DNA sequence contains the provided sequence.
     member x.Contains(other: Dna) = x.str.Contains(other.str)
 
+    /// Generate a sequence of the starting index of every appearance of the given subsequence.
+    /// Because sequence evaluation is lazy, this method is also efficient for finding fewer than
+    /// all of the indices of every appearance of the subsequence.
+    member x.IndicesOf(subseq: Dna) =
+        let rec findNext (startIndex: int) = seq {
+            match x.str.IndexOf(subseq.str, startIndex) with
+            | -1 -> ()
+            | matchIndex ->
+                yield matchIndex
+                if matchIndex < x.str.Length then
+                    yield! findNext (matchIndex + 1)
+        }
+        findNext 0
+
     member x.Length = asArray.Length
 
     /// Get the reverse compliment of this sequence.
