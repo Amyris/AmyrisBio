@@ -94,6 +94,8 @@ module sgd =
          gene : string ;
          sysName : string ;
          id : string}
+        with
+        member x.Length = x.r - x.l + 1
        
     let cmp a b =
     

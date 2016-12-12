@@ -1,5 +1,6 @@
 ### v2.0.15 -- December 5, 2016
 * Improvements to Dna type.
+* Add Length member to SGD feature type.
 
 ### v2.0.14 -- December 2, 2016
 * Various improvements and extensions to the Dna type.
