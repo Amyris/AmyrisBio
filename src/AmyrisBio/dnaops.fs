@@ -163,12 +163,19 @@ module dnaops =
         
     /// Given a genome map and fwd/rev primers, see if there is
     /// a single unique product. Same as ePCR except the maximal length can be tuned
+    /// Request MS108020 into Y27606 fails due to repeats in P0 sequence
+    /// Modified program to allow short repeats no longer than 10bp
+    /// Disallow multiple hits on different chromosome
     let ePCR2 (genome:Map<string,char array>) (fwd:string) (rev:string) (maxPcrLength:int) =
         let hits = ePCRAllowMultipleProducts genome fwd rev maxPcrLength
         match hits with
         | [] -> None
         | [ single ] -> Some(single)
-        | _ -> None
+        | hd::tl -> if tl.Length > 1 then None
+                    else //only two hits
+                        if (abs ((String.length hd.Product) - (String.length tl.[0].Product)) <= 10) &&
+                            (hd.chr = tl.[0].chr) then Some(hd)
+                        else None
 
 
     /// Given a genome map and fwd/rev primers, see if there is
