@@ -13,8 +13,8 @@ module smithWaterman =
         member x.direc = _direc
 
     type SwScores = 
-        { matchScore:int ; deletionScore:int ; mismatchScore:int}    
-    let defaultSwScores = {matchScore= 4; deletionScore= -1; mismatchScore= -1} 
+        { matchScore:int ; deletionOpenScore:int ; deletionExtensionScore:int ; mismatchScore:int}    
+    let defaultSwScores = {matchScore= 40; deletionOpenScore= -40; deletionExtensionScore = -1 ; mismatchScore= -10} 
 
     let _smithWaterman debug (swScores:SwScores option) N W (seq1 : char []) (seq2 : char [])  =
         
@@ -80,7 +80,10 @@ module smithWaterman =
             //let time1 = DateTime.Now    
             // Width of band on matrix
 
+            /// buffered sequence 1, runs acorss, (I, second cell param)
             let s1b = Array.concat [ Array.create (W/2) ' ' ; s1 ; Array.create (maxLen - s1.Length) ' ']
+
+            // Buffered sequence 2, runs down (J, first cell param)
             let s2b = Array.concat [ s2 ; Array.create (maxLen - s2.Length) ' ' ; Array.create (W/2) ' ']
         
         
@@ -88,9 +91,10 @@ module smithWaterman =
 
             let cell = Array2D.create L W (SWCell(-999999,NOWHERE))
         
-            let del = costs.deletionScore // -1
-            let matchCost = costs.matchScore // 4
-            let mismatchCost = costs.mismatchScore //-1
+            let delOpen = costs.deletionOpenScore 
+            let delExtend = costs.deletionExtensionScore 
+            let matchCost = costs.matchScore
+            let mismatchCost = costs.mismatchScore
         
             // Fill out matrix
             cell
@@ -100,10 +104,22 @@ module smithWaterman =
                     let left,upLeft,up = 
                         match x,y with
                         | 0,0 -> 0,0,0  // top left
-                        | 0,_ when x < W-1 -> -999999,(cell.[y,x].s + del) ,(cell.[y-1,x+1].s + del) // Up and left but not last cell on row
-                        | _,_ when x = W-1 -> (cell.[y,x-1].s + del),-999999,-999999 // Last cell in row, just left
-                        | _,0 -> (cell.[y,x-1].s + del),0,del // Top row
-                        | _,_ -> (cell.[y,x-1].s+del), (cell.[y-1,x].s) ,(cell.[y-1,x+1].s+del) // general case
+                        | 0,_ when x < W-1 -> // Up and left but not last cell on row
+                                    -999999, // no left
+                                    (cell.[y-1,x].s) , // up left
+                                    (cell.[y-1,x+1].s + (if cell.[y-1,x+1].direc=UP then delExtend else delOpen)) //up
+                        | _,_ when x = W-1 -> // Last cell in row, just left
+                                        (cell.[y,x-1].s +  (if cell.[y,x-1].direc=LEFT then delExtend else delOpen)), // left
+                                        -999999, // no up left
+                                        -999999  // no up
+                        | _,0 -> // Top row
+                                        (cell.[y,x-1].s + (if cell.[y,x-1].direc=LEFT then delExtend else delOpen)), // left
+                                        0, // upleft
+                                        delOpen  // up
+                        | _,_ -> // general case
+                                 (cell.[y,x-1].s+(if cell.[y,x-1].direc=LEFT then delExtend else delOpen)), // left 
+                                 (cell.[y-1,x].s), // up left
+                                 (cell.[y-1,x+1].s+(if cell.[y-1,x+1].direc=UP then delExtend else delOpen)) // up
                 
                 
                     // Final determination of the diagonal cost depends on the two sequences
@@ -140,31 +156,43 @@ module smithWaterman =
                         outF.Write(sprintf "%c" s2b.[y])
                         for j in { 0 .. y} do
                             outF.Write("\t")
-                    outF.Write(sprintf "%d\t" v.s)
+                    outF.Write(sprintf "%f\t" (
+                                                    (float v.s)+
+                                                    (match v.direc with | UP -> 0.03 | LEFT -> 0.01 | DIAG -> 0.02 | NOWHERE -> 0.04)
+                                               )
+                              )
                     if x = W-1 then
                         outF.Write("\n"))
-
+            (*
             //let time2 = DateTime.Now    
             // Generate alignment, starting with highest value on last row of alignment
-            let mutable best = -999
-            let mutable bestI = -1
-            let mutable bestJ = -1
+            let L' = s2b.Length
+            let mutable best = cell.[L'-1,0].s-1
+            let mutable bestI = 0
+            let mutable bestJ = L'-1
             for i in {0..W-1} do
-                if cell.[L-1,i].s > best then
-                    best <-  cell.[L-1,i].s
+                if cell.[L'-1,i].s > best then
+                    best <-  cell.[L'-1,i].s
                     bestI <- i
                     bestJ <- L-1
+            
             // Walk up that column
-            for j in {L-1-W .. L-1} do
+            for j in {L'-1-W .. L'-1} do
                 // How far to index into row as we move up column
-                let thisI = bestI+(L-1)-j
+                let thisI = bestI+(L'-1)-j
                 //printfn "Walk.. %d %d %d" thisI j cell.[j,thisI].s
                 if thisI < W && cell.[j,thisI].s > best then
                     best <- cell.[j,thisI].s
                     bestJ <- j
                     bestI <- thisI
-                
-            if debug then printfn "Starting at %d,%d -> %d" bestI bestJ best
+                *)
+            //for row in s2b.Length-1..L-1 do
+            let bestJ = s2.Length-1
+            let bestI,best =
+                [|for col in 0..W-1 -> Some(col,cell.[bestJ,col]) |] // if col+bestJ >= (s1.Length+W/2) then None else Some(col,cell.[bestJ,col]) |] 
+                |> Array.choose (id)
+                |> Array.maxBy ( fun (_,cell) -> cell.s)
+            if debug then printfn "Starting at %d,%d -> %d" bestI bestJ best.s
         
             let rec traceback x y (res1:ResizeArray<char>,res2:ResizeArray<char>) =
                 // Explore the best alignment following the highest score at each step
@@ -206,10 +234,18 @@ module smithWaterman =
             let rec skipLeadingSpaces i (a:char [])  (b:char []) =
                 if i >=a.Length then
                     i
-                elif a.[i] = ' ' && b.[i] = ' ' then
+                elif (a.[i] = ' '||a.[i] = '-' ) && (b.[i] = ' '||b.[i] = '-') then
                     skipLeadingSpaces (i+1) a b
                 else
                     i
+            let rec skipTrailingSpaces i (a:char [])  (b:char []) =
+                if i =0 then
+                    i
+                elif (a.[i] = ' ' ||a.[i] = '-') && (b.[i] = ' '|| b.[i] = '-') then
+                    skipTrailingSpaces (i-1) a b
+                else
+                    i
+
             let _,_ = traceback bestI bestJ (align1,align2)  
             let rev (s:string) =
                 s.ToCharArray()
@@ -224,14 +260,15 @@ module smithWaterman =
             let a2 = align2.ToArray()
 
             let firstNonSpace = skipLeadingSpaces 0 a1 a2
+            let lastNonSpace = skipTrailingSpaces (a1.Length-1) a1 a2 |> max firstNonSpace
             let ret =
                 if firstNonSpace >= a1.Length then 
-                    ( true,"","",best)
+                    ( true,"","",best.s)
                 else
                     (true,
-                     (a1.[firstNonSpace..] |> arr2seq |> rev),
-                     (a2.[firstNonSpace..] |> arr2seq |> rev),
-                     best)
+                     (a1.[firstNonSpace..lastNonSpace] |> arr2seq |> rev),
+                     (a2.[firstNonSpace..lastNonSpace] |> arr2seq |> rev),
+                     best.s)
             //let time4 = DateTime.Now    
 //            let t1 = time1 - time0
 //            let t2 = time2 - time1

@@ -127,6 +127,9 @@ module biolib =
     /// Translate DNA to protein, 3 bases at a time, folding from
     /// the left, only adding an AA when we are in a position modulo 3
     let translate (seq : char []) =
+        [| for i in 0..3..seq.Length-3 -> codon2aa (seq.[i..i+2] )|] 
+
+        (*
         let _(*off*),p =
             seq
             |> Array.fold
@@ -137,6 +140,7 @@ module biolib =
                         (i+1,prot))
                 (0,[||])
         p
+        *)
         
     // -----------------------------------------------
     // Use a blosum matrix to evaluate the cost of a substitution

@@ -1,3 +1,6 @@
+### v2.0.16 -- January 24, 2016
+* Performance improvements to protein translation algorithm,  added test
+
 ### v2.0.15 -- December 5, 2016
 * Improvements to Dna type.
 * Add Length member to SGD feature type.
