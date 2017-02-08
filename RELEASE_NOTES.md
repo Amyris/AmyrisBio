@@ -1,3 +1,6 @@
+### v2.0.17 -- February 8, 2017
+* primerCore gets oligoDesignWithComprise b/c sometimes you just have to break the rules
+
 ### v2.0.16 -- January 24, 2016
 * Performance improvements to protein translation algorithm,  added test
 

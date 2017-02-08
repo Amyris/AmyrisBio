@@ -296,9 +296,9 @@ module primercore =
              )  (*|> K2C *)
 
     /// Calc temp given a GC and oligo length
-    let gcN2Temp gc N = 
-        if N < 14 then (4*gc) + 2 * (N-gc)*2
-        else (64.9+41.0*(float(gc)-16.4)/float(N) ) |> int
+    let gcN2Temp gc n = 
+        if n < 14 then (4*gc) + 2 * (n-gc)*2
+        else (64.9+41.0*(float(gc)-16.4)/float(n) ) |> int
 
     let monoSaltCorrect (mon:float<M>) (Ca:float<M>) (Cb:float<M>) (o : char array) N =
         let tm1000 = wikiTemp1000 Ca Cb o N
@@ -464,7 +464,7 @@ module primercore =
         designLeftInternal sInitUpper nextBase gcCount (0.0<C>)
     
     /// Check for the presence of mono- or dinucleotide repeats longer than N
-    let hasPolyrun N (s:char[]) =
+    let hasPolyrun n (s:char[]) =
         let rec worstMonoNuclRun i lastChar thisRun worst =
             if i = s.Length then worst |> max thisRun else
             if s.[i] = lastChar then worstMonoNuclRun (i+1) lastChar (thisRun+1) worst else
@@ -476,18 +476,18 @@ module primercore =
                 worstDiNuclRun (i+2) lastChars (thisRun+1) worst 
             else
                 worstDiNuclRun (i+2) (s.[i-1..i]) 1 (worst |> max thisRun)
-        (worstMonoNuclRun 0 '?' 0 0) >=N 
-            || worstDiNuclRun 1 [||] 0 0 >= N 
-            || worstDiNuclRun 2 [||] 0 0 >= N
+        (worstMonoNuclRun 0 '?' 0 0) >=n 
+            || worstDiNuclRun 1 [||] 0 0 >= n 
+            || worstDiNuclRun 2 [||] 0 0 >= n
 
     
     [<Obsolete>]
-    let hasPolyGRun N (s:char[]) =
+    let hasPolyGRun n (s:char[]) =
         let rec worstRun i thisRun worst =
                     if i = s.Length then worst |> max thisRun else
                     if s.[i] = 'G' then worstRun (i+1) (thisRun+1) worst else
                     worstRun (i+1) 0 (worst |> max thisRun)
-        (worstRun 0 0 0) >=N
+        (worstRun 0 0 0) >=n
 
     type GCN = {gc : int ; n : int}
 
@@ -505,13 +505,13 @@ module primercore =
     
     /// Design all compatible primers from a specified sequence.
     let designCenterMany (pen:PrimerParams) (s:char[]) (seqPen:float []) tTemp =
-        let N = s.Length
-        let temps = Array2D.init N N (fun _ _ -> {gc = 0 ; n = 0} )
+        let n = s.Length
+        let temps = Array2D.init n n (fun _ _ -> {gc = 0 ; n = 0} )
     
         let mid = s.Length / 2
         seq {
-            for l in {0..N-1} do
-            for r in {0..N-1} do
+            for l in {0..n-1} do
+            for r in {0..n-1} do
                 if r > l && r-l+1>=pen.minLength && r-l+1 <= pen.maxLength then
                     temps.[l,r] <-
                         if l = r then
@@ -609,7 +609,7 @@ module primercore =
             printf "best l= %d r= %d len= %d temp= %A posD= %f tempD= %f lenD= %f hasPoly=%s score/Pen=%f oligo=%s\n"
                 best.l best.r (best.r-best.l+1) best.t best.posD 
                 best.tempD best.lenD (if best.hasPoly then "Y" else "N") best.pen
-                (arr2seq s.[best.l..best.r])
+                (if best.l <> -1 then arr2seq s.[best.l..best.r] else "")
         if best.t >= 999990.0<C> then None else 
             let o = { tag = ""; oligo = s.[best.l..best.r] ; temp = best.t ; offset = offFn best.l}
             assert(o.oligo.Length <= pen.maxLength) 
@@ -656,7 +656,7 @@ module primercore =
                         pen.maxLength s'.Length
                 let oligo = s'.[..(min s'.Length pen.maxLength)-1] // longest allowed
                 Some( { tag=o.tag; oligo = oligo ; temp = temp pen oligo pen.maxLength; offset = o.offset } ) // calc temperature and offset is 0 plus their supplied offset
-            | _ as x -> x // 
+            | x -> x // 
                     
         | RIGHT -> failwith "should not get right here"
         | CENTERLEFT -> designCenter debug pen s' seqPen offFn ( (float o.targetTemp)*1.0<C>)
@@ -667,6 +667,104 @@ module primercore =
 
         | CENTERRIGHT -> failwith "should not get centerright here"
 
+    (*
+       // When you can't meet the default primer design criteria (e.g. min 20, 60+/- 5C tm), what should you do
+
+       Biologist 1: I vote for preserving the minimum annealing length (20 bp or maybe 18 bp would be okay), 
+                    and I’m willing to pay the cost of higher melting temps. 
+       Biologist 2: I’d try to get the right melting temperature. Oligos smaller than 20 work. Plus, they are 
+                    cheaper! Just make sure to add a note that operators will have to tap those plates 
+                    three times while spinning counterclockwise or they will fail.
+
+       Biologist 3: I think its ok to overshoot the target melting temp. Very anecdotal, but I have found 
+                    in my personal experience that a primer with higher mp than needed had a better chance of working.
+    
+    *)
+    type GcContent = GCHIGH|GCLOW|GCMED|GCUNKNOWN
+
+    /// Same function as oligoDesign but with heuristics to relax the constraints if necessary to
+    /// get a design
+    let oligoDesignWithCompromise debug pen (o : OligoTask) =
+        let rec tryWith (gcContent:GcContent) (penCurr:PrimerParams)  =
+            // First just try to design an oligo
+            match oligoDesign debug penCurr o with
+            | None -> 
+                // that didn't go so well, have we worked out gc regime yet?
+                // establish if we have high or low GC since that dictates different
+                // strategies
+                // establish what situation we are dealing with if we haven't already
+                let gcContent' = match gcContent with
+                                    | GCUNKNOWN -> 
+                                        let gc = gc o.temp
+                                        if gc < 0.4 then GCLOW 
+                                        elif gc > 0.6 then GCHIGH
+                                        else GCMED
+                                    | _ -> gcContent
+                let pen' = 
+                    match gcContent' with
+                        | GCHIGH  ->
+                            // in high GC we fail to reach min primer length.  Might be able to relax that.
+                            // if that gets too dire, allow temp deviation to float up
+                            if penCurr.minLength > 18 then 
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: relax minLength to %d" 
+                                        (penCurr.minLength-1)
+                                Some {penCurr with minLength = penCurr.minLength-1}
+                            elif penCurr.tmMaxDifference < 10.0<C> then
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: increase tmMaxDiff to %fC" 
+                                        (penCurr.tmMaxDifference/1.0<C>)
+                                Some {penCurr with tmMaxDifference = penCurr.tmMaxDifference+1.0<C>}
+                            else
+                                None // run out of ideas,  fail
+                        | GCMED  ->
+                            // unclear if we need to allow longer or shorter primers
+                            // try relaxing TmMaxDiff first
+                            if penCurr.tmMaxDifference < 10.0<C> then
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: increase tmMaxDiff to %fC" 
+                                        (penCurr.tmMaxDifference/1.0<C>)
+                                Some {penCurr with tmMaxDifference = penCurr.tmMaxDifference+1.0<C>}
+                            elif penCurr.minLength > 18 then 
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: relax minLength to %d" 
+                                        (penCurr.minLength-1)
+                                Some {penCurr with minLength = penCurr.minLength-1}
+                            elif penCurr.maxLength < 30 then 
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: relax maxLength to %d" 
+                                        (penCurr.maxLength+1)
+                                Some {penCurr with maxLength = penCurr.maxLength+1}
+                            else
+                                None // run out of ideas,  fail
+                        | GCLOW  ->
+                            // Low GC usually results in long primers that fail to reach their target tm
+                            // try relaxing TmMaxDiff first
+                            if penCurr.tmMaxDifference < 10.0<C> then
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: increase tmMaxDiff to %fC" 
+                                        (penCurr.tmMaxDifference/1.0<C>)
+                                Some {penCurr with tmMaxDifference = penCurr.tmMaxDifference+1.0<C>}
+                            elif penCurr.maxLength < 30 then 
+                                if debug then 
+                                    printfn "primerDesignWithCompromise: relax maxLength to %d" 
+                                        (penCurr.maxLength+1)
+                                Some {penCurr with maxLength = penCurr.maxLength+1}
+                            else
+                                None // run out of ideas,  fail
+                        | GCUNKNOWN -> 
+                            failwithf "Impossible"
+
+                // if there are suggested params to try, go for it, otherwise fail whole
+                // operation
+                match pen' with
+                    | None -> None
+                    | Some x ->
+                        // try again with new parameters
+                        tryWith gcContent' x
+            | x -> x // victory, return a result
+
+        tryWith GCUNKNOWN pen
 
     (*
     /// Stitch two sequences left and right together with overlapping oligos creating an optional middle sequence
