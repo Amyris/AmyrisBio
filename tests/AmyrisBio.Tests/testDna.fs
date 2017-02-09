@@ -37,6 +37,15 @@ let testDnaType() =
         (Dna("gacgcacactc"), Dna("ccttccttgaaaacgcacaatcatacaactgggcacataatgcgtacgcccatctaatacatccaactctctaggtcctgttcaagagc")),
         d.Split(10))
 
+    // Check that hash codes two two identical DNA objects are equivalent.
+    let d1 = Dna(randomDna100BPLower)
+    let d2 = Dna(randomDna100BPLower)
+    Assert.AreEqual(d1, d2)
+    let dnaSet = Set.ofList [d1; d2]
+    Assert.AreEqual(1, dnaSet.Count)
+    Assert.AreEqual(Operators.hash d1, Operators.hash d2)
+    Assert.AreEqual(d1.GetHashCode(), d2.GetHashCode())
+
 [<Test>]
 let testConcat() =
     let pieces = [Dna("AAAGGTCCAT"); Dna("AGCACGTACA"); Dna("TCGCAACCTG")]

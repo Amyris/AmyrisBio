@@ -1,3 +1,6 @@
+### v2.0.18 -- February 9, 2017
+* Fix Dna hash to use structural hashing of underlying array.
+
 ### v2.0.17 -- February 8, 2017
 * primerCore gets oligoDesignWithComprise b/c sometimes you just have to break the rules
 

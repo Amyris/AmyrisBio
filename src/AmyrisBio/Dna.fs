@@ -103,7 +103,7 @@ type Dna private (asArray:char [], rc: Dna option, mode: SequenceSemantics) =
         member x.CompareTo(other) = compare x.arr other.arr
 
     // Implement hash as hash of the underlying sequence, ignoring memoization.
-    override x.GetHashCode() = asArray.GetHashCode()
+    override x.GetHashCode() = Operators.hash asArray
 
     /// Return a view of a slice of this DNA sequence.
     /// Start and finish are both inclusive indices.
