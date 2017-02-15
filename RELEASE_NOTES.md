@@ -1,3 +1,6 @@
+### v2.0.19 -- February 15, 2017
+* Add OptionExtensions namespace for providing useful extensions to Option.
+
 ### v2.0.18 -- February 9, 2017
 * Fix Dna hash to use structural hashing of underlying array.
 
