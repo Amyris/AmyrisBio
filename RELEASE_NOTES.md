@@ -1,3 +1,7 @@
+### v2.0.21 -- February 15, 2017
+* Fix error type bug in overlap stitching function.
+* Simplify stitching and loopout result types to options.
+
 ### v2.0.20 -- February 15, 2017
 * Elevate some exception printing methods to ErrorHandling.
 

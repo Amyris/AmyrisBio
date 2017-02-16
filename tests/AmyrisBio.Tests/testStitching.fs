@@ -20,16 +20,16 @@ let tail0 = "AATAAATCTGTCGTAGTAACCGGCTTCAACGACCCGTACAGGTGGCACTTCAGGAGGGGCCCGCAGG
 let tail1 = "GCTATTCGTGGCCGTTCGTGGTAACTAGTTGCGTTCCTAGCCACTACAATTGTTTCTAAGCCGTGTAATGAGAACAACCA"
 
 
-let assertStitchedTo s correct =
+let assertStitchedTo (s:Result<Dna option,_>) correct =
     match s with
-    | Ok(Stitchable(stitchedSeq), msgs) ->
+    | Ok(Some(stitchedSeq), msgs) ->
         Assert.AreEqual(stitchedSeq.str, correct)
         Assert.IsEmpty(msgs)
     | x -> Assert.Fail(sprintf "%A" x)
 
 let assertUnstitchable s =
     match s with
-    | Ok(Unstitchable, msgs) ->
+    | Ok(None, msgs) ->
         Assert.IsEmpty(msgs)
     | x -> Assert.Fail(sprintf "%A" x)
 
@@ -100,7 +100,7 @@ let defaultReq s = {s = s; searchParams = defaultLoopoutSearchParams}
 
 let assertSingleLoopout s res =
     match computeLoopoutScar (defaultReq s) with
-    | Ok(Loopout(ls, None), msgs) ->
+    | Ok(Some({scar0 = ls; scar1=None}), msgs) ->
         Assert.AreEqual(res, ls)
         Assert.IsEmpty(msgs)
     | x ->
@@ -108,7 +108,7 @@ let assertSingleLoopout s res =
 
 let assertMultiLoopout s (res: Dna * Dna) =
     match computeLoopoutScar (defaultReq s) with
-    | Ok(Loopout(ls0, Some(ls1)), msgs) ->
+    | Ok(Some {scar0 = ls0; scar1 = Some(ls1)}, msgs) ->
         Assert.AreEqual(res, (ls0, ls1))
         Assert.IsEmpty(msgs)
     | x ->
@@ -116,7 +116,7 @@ let assertMultiLoopout s (res: Dna * Dna) =
 
 let assertNoLoopout s =
     match computeLoopoutScar (defaultReq s) with
-    | Ok(NoLoopout, msgs) ->
+    | Ok(None, msgs) ->
         Assert.IsEmpty(msgs)
     | x ->
         Assert.Fail(sprintf "Wrong result: %A" x)

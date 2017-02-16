@@ -19,9 +19,7 @@ let defaultSearchParameters =
 type OverlapStitchRequest =
    {seq0: Dna; seq1: Dna; margin0: Dna; margin1: Dna; searchParams: OverlapSearchParameters}
 
-type OverlapStitchResult =
-    | Stitchable of Dna
-    | Unstitchable
+type OverlapStitchResult = Option<Dna>
 
 /// Compute the DNA sequence expected to result from homologous recombination.
 /// This function assumes both sequences are antiparallel and provided in the sense direction,
@@ -99,13 +97,13 @@ let overlapStitchWithMargins req : Result<OverlapStitchResult, string> =
                 tryAlign (len+1)
 
         match tryAlign minOverlap with
-        | None -> ok Unstitchable
+        | None -> ok None
         | Some(l) ->
             // Return a new Dna sequence from the computed overlap
             // Get the tail of seq1 minus margin and overlap region
             let stitchedSeq = Seq.append (seq0.Subseq(0, seq0End)) (seq1RC.Subseq(seq1RCStart + l))
             // skip validation as incoming DNA should already be validated
-            ok (Stitchable(Dna(stitchedSeq, false)))
+            ok (Some(Dna(stitchedSeq, false)))
 
     req |> (checkSeqs >=> tryStitch)
 
@@ -119,9 +117,9 @@ let defaultLoopoutSearchParams =
     minOverlap = 50UL;
     maxOverlap = 500UL}
 
-type LoopoutResult =
-    | NoLoopout
-    | Loopout of Dna * Dna option
+type LoopoutScars = {scar0: Dna; scar1: Dna option}
+
+type LoopoutResult = Option<LoopoutScars>
 
 /// Given two sequences, return the tails of the two sequences following
 /// any mismatch in character.
@@ -225,8 +223,8 @@ let computeLoopoutScarPostValidation (req: LoopoutRequest) =
         let rightSeq = s.[rightStart..]
         match equalWithIndel leftSeq rightSeq with
         | NotEqual -> None
-        | Equal -> Some(leftSeq, None)
-        | EqualWithIndel -> Some(leftSeq, Some(rightSeq))
+        | Equal -> Some {scar0 = leftSeq; scar1 = None}
+        | EqualWithIndel -> Some {scar0 = leftSeq; scar1 = Some(rightSeq)}
 
     /// Search for candidate locations where this diagram holds true:
     /// HEADSEQ...n bp...TAILSEQ... ...HEADSEQ...n+-1 bp...TAILSEQ
@@ -234,13 +232,13 @@ let computeLoopoutScarPostValidation (req: LoopoutRequest) =
     let rec search (start: int) =
         // Starting at start, find the next occurrence of the tail snippet
         match s.str.IndexOf(tail, start) with
-        | -1 -> ok NoLoopout // No matches left, we're done
+        | -1 -> ok None // No matches left, we're done
         | i when i < minIndex ->
             // Found a candidate but it implies insufficient overlap.  Continue.
             search (i+1)
         | i when i > maxIndex ->
             // Found a candidate but it implies too large of an overlap.  Abort.
-            ok NoLoopout
+            ok None
         | i ->
             // Potentially good candiate, see if its a loose match
             // Check for head snippet at the mirror position +- 1 bp
@@ -249,7 +247,7 @@ let computeLoopoutScarPostValidation (req: LoopoutRequest) =
             | x -> // found some matches
                 match x |> List.choose (checkMatch i) with
                 | [] -> search (i+1) // no good matches
-                | [x] -> ok (Loopout(x)) // one perfect match
+                | [scars] -> ok (Some scars) // one perfect match
                 | x -> fail (sprintf "Multiple possible loopout matches found: %A" x)
     
     search 0
