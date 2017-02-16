@@ -32,7 +32,7 @@ type OverlapStitchResult =
 /// The returned sequence will read in the sense direction of seq0.
 /// Any margin tails (for example, linkers) must be explicitly provided or stitching will fail.
 /// This function will check for exact overlap within the provided window.
-let overlapStitchWithMargins req =
+let overlapStitchWithMargins req : Result<OverlapStitchResult, string> =
     let minOverlap = int (defaultArg req.searchParams.minOverlap defaultMinOverlap)
         
     /// Check to make sure that:
@@ -56,7 +56,7 @@ let overlapStitchWithMargins req =
         let errs = checkSeq req.seq0 req.margin0 0
         errs.AddRange(checkSeq req.seq1 req.margin1 1)
         if errs.Count <> 0 then
-            fail(errs)
+            Bad(errs |> List.ofSeq)
         else
             ok(req)
 
@@ -107,7 +107,7 @@ let overlapStitchWithMargins req =
             // skip validation as incoming DNA should already be validated
             ok (Stitchable(Dna(stitchedSeq, false)))
 
-    req |> (checkSeqs >> bind tryStitch)
+    req |> (checkSeqs >=> tryStitch)
 
 type LoopoutSearchParams =
    {prefixSearchLength: int;
