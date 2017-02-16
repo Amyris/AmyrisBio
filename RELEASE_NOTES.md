@@ -1,3 +1,6 @@
+### v2.0.20 -- February 15, 2017
+* Elevate some exception printing methods to ErrorHandling.
+
 ### v2.0.19 -- February 15, 2017
 * Add OptionExtensions namespace for providing useful extensions to Option.
 

@@ -4,6 +4,53 @@
 namespace Amyris.ErrorHandling
 
 open System
+open System.Text
+open System.Reflection
+open Microsoft.FSharp.Core.Printf
+
+/// Helper functions for displaying exceptions.
+[<AutoOpen>]
+module Display =
+    /// Pretty print an exception chain, including all inner exceptions.
+    /// Uses reflection to print the type of each exception as well.
+    /// Taken from https://sergeytihon.wordpress.com/2013/04/08/f-exception-formatter/
+    let prettyPrintException (e:Exception) =
+        let sb = StringBuilder()
+        let delimeter = String.replicate 50 "*"
+        let nl = Environment.NewLine
+        let rec printException (e:Exception) count =
+            if (e :? TargetException && e.InnerException <> null)
+            then printException (e.InnerException) count
+            else
+                if (count = 1) then bprintf sb "%s%s%s" e.Message nl delimeter
+                else bprintf sb "%s%s%d)%s%s%s" nl nl count e.Message nl delimeter
+                bprintf sb "%sType: %s" nl (e.GetType().FullName)
+                // Loop through the public properties of the exception object
+                // and record their values.
+                e.GetType().GetProperties()
+                |> Array.iter (fun p ->
+                    // Do not log information for the InnerException or StackTrace.
+                    // This information is captured later in the process.
+                    if (p.Name <> "InnerException" && p.Name <> "StackTrace" &&
+                        p.Name <> "Message" && p.Name <> "Data") then
+                        try
+                            let value = p.GetValue(e, null)
+                            if (value <> null)
+                            then bprintf sb "%s%s: %s" nl p.Name (value.ToString())
+                        with
+                        | e2 -> bprintf sb "%s%s: %s" nl p.Name e2.Message
+                )
+                if (e.StackTrace <> null) then
+                    bprintf sb "%s%sStackTrace%s%s%s" nl nl nl delimeter nl
+                    bprintf sb "%s%s" nl e.StackTrace
+                if (e.InnerException <> null)
+                then printException e.InnerException (count+1)
+        printException e 1
+        sb.ToString()
+
+    /// Prepend a custom message to the head of a pretty-printed exception.
+    let detailedExceptionMessage msg e =
+        sprintf "%s\n%s" msg (prettyPrintException e)
 
 /// Represents the result of a computation.
 type Result<'TSuccess, 'TMessage> = 
