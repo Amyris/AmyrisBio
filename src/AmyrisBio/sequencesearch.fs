@@ -77,9 +77,14 @@ module SequenceSearch =
                             allMatches
                             |> Seq.fold
                                 (fun (prevSeq:string) l ->
-                                      (prevSeq.[..(l-1)]
-                                    + (Array.create longestMatchLength '#' |> arr2seq)
-                                    + prevSeq.[(l+longestMatchLength)..]))
+                                    if l-1 < 0 then
+                                        ((Array.create longestMatchLength '#' |> arr2seq)
+                                        + prevSeq.[(l+longestMatchLength)..])
+                                    else
+                                        (prevSeq.[..(l-1)]
+                                        + (Array.create longestMatchLength '#' |> arr2seq)
+                                        + prevSeq.[(l+longestMatchLength)..])
+                                )
                                 targetSeqString
 
                         let maskedTargetSeqST = SuffixTree(maskedTargetSeqString)
