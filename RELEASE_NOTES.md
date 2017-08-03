@@ -1,3 +1,6 @@
+### v2.0.22 -- August 3, 2017
+* Fix index error in SW alignment.
+
 ### v2.0.21 -- February 15, 2017
 * Fix error type bug in overlap stitching function.
 * Simplify stitching and loopout result types to options.

@@ -60,19 +60,19 @@ type Result<'TSuccess, 'TMessage> =
     | Bad of 'TMessage list
 
     /// Creates a Failure result with the given messages.
-    static member FailWith(messages:'TMessage seq) : Result<'TSuccess, 'TMessage> = Result<'TSuccess, 'TMessage>.Bad(messages |> Seq.toList)
+    static member FailWith(messages:'TMessage seq) : Result<'TSuccess, 'TMessage> = Bad(messages |> Seq.toList)
 
     /// Creates a Failure result with the given message.
-    static member FailWith(message:'TMessage) : Result<'TSuccess, 'TMessage> = Result<'TSuccess, 'TMessage>.Bad([message])
+    static member FailWith(message:'TMessage) : Result<'TSuccess, 'TMessage> = Bad([message])
     
     /// Creates a Success result with the given value.
-    static member Succeed(value:'TSuccess) : Result<'TSuccess, 'TMessage> = Result<'TSuccess, 'TMessage>.Ok(value,[])
+    static member Succeed(value:'TSuccess) : Result<'TSuccess, 'TMessage> = Ok(value,[])
 
     /// Creates a Success result with the given value and the given message.
-    static member Succeed(value:'TSuccess,message:'TMessage) : Result<'TSuccess, 'TMessage> = Result<'TSuccess, 'TMessage>.Ok(value,[message])
+    static member Succeed(value:'TSuccess,message:'TMessage) : Result<'TSuccess, 'TMessage> = Ok(value,[message])
 
     /// Creates a Success result with the given value and the given message.
-    static member Succeed(value:'TSuccess,messages:'TMessage seq) : Result<'TSuccess, 'TMessage> = Result<'TSuccess, 'TMessage>.Ok(value,messages |> Seq.toList)
+    static member Succeed(value:'TSuccess,messages:'TMessage seq) : Result<'TSuccess, 'TMessage> = Ok(value,messages |> Seq.toList)
 
     /// Executes the given function on a given success or captures the failure
     static member Try(func: Func<_>) : Result<'TSuccess,exn> =        
@@ -103,7 +103,7 @@ module Trial =
     let inline fail<'TSuccess,'Message> (msg:'Message) : Result<'TSuccess,'Message> = Bad([ msg ])
 
     /// Executes the given function on a given success or captures the exception in a failure
-    let inline Catch f x = Result<_,_>.Try(fun () -> f x)
+    let inline Catch f x = Result.Try(fun () -> f x)
 
     /// Returns true if the result was not successful.
     let inline failed result = 
