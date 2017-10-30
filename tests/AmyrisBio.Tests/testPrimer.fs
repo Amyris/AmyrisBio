@@ -3,7 +3,6 @@
 open Amyris.Bio.primercore
 open NUnit.Framework
 
-
 [<TestFixture>]
 type TestPrimer() = class     
     do
@@ -67,4 +66,41 @@ type TestPrimer() = class
 
         let p = oligoDesignWithCompromise false pen task
         Assert.IsTrue(p.IsSome)
+
+    [<Test>]
+    /// Test that we don't form a primer dimer under tempting circumstances
+    member __.TestPrimerDimer() =
+        let template ="CGGTTGGGCTTAACTTTAAAGAAAAAAGTTGAGATTAGATTTATTGTGTT"
+        let pen= {
+            tmPenalty = 1.0; 
+            tmMaxDifference = 5.0<C> ;
+            positionPenalty = 5.0 ; 
+            lengthPenalty = 3.0 ; 
+            polyLengthThreshold = 4; 
+            polyPenalty = 10. ; 
+            threePrimeUnstablePenalty = 5.0 ; 
+            ATPenalty=3.0<C> ; 
+            targetLength=20 ;
+            maxLength = 60 ;
+            minLength = 20 ; 
+            monovalentConc = mM2M 50.0<mM>;
+            primerConc = uM2M 0.25<uM> ; 
+            divalentConc = mM2M 1.5<mM> ; 
+            templateConc = uM2M 0.01<uM> ; 
+            dNTPConc = uM2M 0.0<uM> ;}
+
+        let task = { tag = "PR";
+                     temp = (template.ToCharArray())
+                     align = LEFT;
+                     strand = TOP;
+                     offset = 0;
+                     targetTemp = 60.0<C>;
+                     sequencePenalties = None}
+
+        match oligoDesign false pen task with
+        | None -> Assert.Fail "TestPrimerDimer failed to make a primer"
+        | Some design ->
+            let tail = Amyris.Bio.primercore.longestTailTailOverlap design.oligo design.oligo
+            Assert.IsTrue(tail<4)
+
 end

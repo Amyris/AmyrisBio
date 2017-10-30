@@ -237,6 +237,22 @@ module primercore =
         
         g3Final > -9.0
 
+    // find longest tail to tail pair that is self complementary
+    // 5' tgtCTTTAAAG 3'
+    //    3' GAAATTTCtgtg 5'
+    let longestTailTailOverlap (s1:char array) (s2:char array) =
+        let suffix (d:char array) l = d.[d.Length-l..]
+
+        let maxOverlap = min s1.Length s2.Length
+        seq {
+                        for i in 0..maxOverlap do
+                            let suffix1 = suffix s1 i
+                            let suffix2 = suffix s2 i
+                            if suffix1 = Amyris.Bio.biolib.revComp suffix2 then
+                                yield i
+                    } |> Seq.fold (max) 0
+
+
     /// Test if an oligo is self complementary
     let selfComp (oligo:char array) length =
         let rec checkOne l r =
