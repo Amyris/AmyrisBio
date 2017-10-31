@@ -379,10 +379,54 @@ module primercore =
         let _,_,x = _temp p oligo N
         x
 
+    /// disrupt self primer dimers
+    /// Tweak the stopping point of a primer if it would help avoid a 
+    /// situation where last N bases of the primer are self complementary and
+    /// can lead to formation of a primer dimer
+    /// 5'-------CTTTAAAG-3'
+    ///        3'GAAATTTC--------5'
+    let disruptPrimerDimers (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t offset =
+        let debug = true
+        if debug then
+            printfn "disruptPrimerDimers: checking for problems"
+        let comp (b:char) = match b with | 'G'  -> 'C' | 'C'  -> 'G' | 'A'  -> 'T' | 'T'  -> 'A' | x -> x
+
+        /// check longest self complementary tail for
+        /// oligo defined by f'->t' inclusive  
+        let localLongestTailTailOverlap f' t' =
+            let l = t'-f'+1
+            seq {
+                for i in 1..l-1 do
+                    if seq { 0..i-1 } |> Seq.forall (fun j -> s.[t'-i+j] = comp (s.[t'-j])) then
+                        yield (i+1)
+            } |> Seq.fold (max) 0
+
+        let initialTail = localLongestTailTailOverlap f t
+        if debug then printfn "disruptPrimerDimers: initialTail of length %d for %s" initialTail (arr2seq s.[f..t])
+        // no-op
+        if initialTail < 3 then
+            { tag = ""; oligo = s.[f..t] ; temp = existingTemp ; offset = f+offset } 
+        else
+            printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail f t
+            seq { for i in [1 ; -1 ; 2 ; -2 ; 3 ; -3 ; 4 ; -3] do
+                    let t' = t+i
+                    let len' = t'-f+1
+                    if debug then printfn "disruptPrimerDimers: considering f=%d t=%d len=%d min=%d max=%d templateLen=%d" f t' len' p.minLength p.maxLength s.Length
+                    if len' >= p.minLength && len' <= p.maxLength && t' < s.Length && t' > f then
+                        let tail' = localLongestTailTailOverlap f t'
+                        if debug then printfn "disruptPrimerDimers: considering tail of length %d for %d" tail' t'
+                        yield tail',t'
+            } 
+            |> Seq.fold (min) (initialTail,t)
+            |> fun (finalTail,finalT) ->
+                printfn "disruptPrimerDimers: finalTail of length %d deltaT=%d f=%d finalT=%d" finalTail (finalT-t) f finalT
+                let finalTemp = temp p (s.[f..finalT]) (finalT-f+1)
+                { tag = ""; oligo = s.[f..finalT] ; temp = finalTemp; offset = f+offset } 
+
+
     /// Cut out the region from fr -> to and extend
     // Given oligo array from to gcInit offset , return oligo, temp, offset
-    let cutToGC (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t _ (*startingGC*) offset =
-        //let startingN = t-f + 1
+    let cutToGC (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t _startingGC offset =
         let rec findGCFwd t' (*gc' *) =
             if t' < 0 || t' >= s.Length then
                 failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" t'
@@ -477,7 +521,11 @@ module primercore =
                         if debug then printfn "designLeft, stopping at nextBase-1=%d thisTemp=%f" (nextBase-1) (thisTemp/1.0<C>)
                         Some(cutToGC debug lastTemp p s 0 (nextBase-1) gcCount offset)
 
-        designLeftInternal sInitUpper nextBase gcCount (0.0<C>)
+        match designLeftInternal sInitUpper nextBase gcCount (0.0<C>) with
+        | None -> None
+        | Some prePDCheck ->
+            // possible final tweaks if we have made a primer-dimer with the tail
+            Some ( disruptPrimerDimers debug prePDCheck.temp p sInitUpper 0 (prePDCheck.oligo.Length-1) offset)
     
     /// Check for the presence of mono- or dinucleotide repeats longer than N
     let hasPolyrun n (s:char[]) =
