@@ -386,7 +386,6 @@ module primercore =
     /// 5'-------CTTTAAAG-3'
     ///        3'GAAATTTC--------5'
     let disruptPrimerDimers (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t offset =
-        let debug = true
         if debug then
             printfn "disruptPrimerDimers: checking for problems"
         let comp (b:char) = match b with | 'G'  -> 'C' | 'C'  -> 'G' | 'A'  -> 'T' | 'T'  -> 'A' | x -> x
@@ -396,10 +395,11 @@ module primercore =
         let localLongestTailTailOverlap f' t' =
             let l = t'-f'+1
             seq {
-                for i in 1..l-1 do
+                for i in l-1..-1..1 do
                     if seq { 0..i-1 } |> Seq.forall (fun j -> s.[t'-i+j] = comp (s.[t'-j])) then
                         yield (i+1)
-            } |> Seq.fold (max) 0
+            } |> Seq.tryFind(fun x -> x<> 0) 
+            |> function | None -> 0 | Some v -> v
 
         let initialTail = localLongestTailTailOverlap f t
         if debug then printfn "disruptPrimerDimers: initialTail of length %d for %s" initialTail (arr2seq s.[f..t])
@@ -408,7 +408,7 @@ module primercore =
             { tag = ""; oligo = s.[f..t] ; temp = existingTemp ; offset = f+offset } 
         else
             printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail f t
-            seq { for i in [1 ; -1 ; 2 ; -2 ; 3 ; -3 ; 4 ; -3] do
+            seq { for i in [1 ; -1 ; 2 ; -2 ; 3 ; -3 ; 4 ; -4; 5; -5 ; 6 ; -6] do
                     let t' = t+i
                     let len' = t'-f+1
                     if debug then printfn "disruptPrimerDimers: considering f=%d t=%d len=%d min=%d max=%d templateLen=%d" f t' len' p.minLength p.maxLength s.Length
@@ -425,56 +425,94 @@ module primercore =
 
 
     /// Cut out the region from fr -> to and extend
-    // Given oligo array from to gcInit offset , return oligo, temp, offset
+    /// Given oligo array from to gcInit offset , return oligo, temp, offset
     let cutToGC (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t _startingGC offset =
+        if debug then 
+            printfn "cutToGC: starting design f=%d t=%d oligo=%s"
+                f 
+                t 
+                (arr2seq s.[f..t])
         let rec findGCFwd t' (*gc' *) =
             if t' < 0 || t' >= s.Length then
                 failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" t'
             match s.[t'] with
             |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..t'])-> 
-                (t', temp p (s.[f..t']) (t'-f+1)) // end on G/C
+                Some (t', temp p (s.[f..t']) (t'-f+1)) // end on G/C
                     
             | _ when t' < (s.Length-1) && t'-f+1 < p.maxLength -> findGCFwd (t'+1)
-            | _ -> (t, (temp p s.[f..t] (t-f+1))) // fall back on original oligo if we run out of S without finding G
+            | _ -> None
 
         let rec findGCRev t' =
             if t' < 0 || t' >= s.Length then
                 failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" t'
             match s.[t'] with
             |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..t']) -> 
-                (t', temp p (s.[f..t']) (t'-f+1)) // end on G/C
+                Some (t', temp p (s.[f..t']) (t'-f+1))
                     
             | _ when t' > 1  && t'-f+1 > p.minLength -> findGCRev (t'-1)  
-            | _ -> (t, (temp p s.[f..t] (t-f+1))) // fall back on original oligo if we run out of S without finding G
+            | _ -> None
                                            
         if p.ATPenalty < 0.0001<C> then
             // No GC optimization
-            if debug then printfn "cutToGC: no atPenalty, done"
+            if debug then printfn "cutToGC: no atPenalty, done len=%d" (t-f+1)
             { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
         else
             // Is there an alternative starting point that would end on a G or C that's not too far away?                
-            let altTFwd,altTempFwd = findGCFwd t
-            let altTRev,altTempRev = findGCRev t
+            let altBest =
+                match findGCFwd t,findGCRev t with
+                | None,None -> None // no better option
+                | Some (altPos,altTemp),None ->
+                    if debug then
+                        printfn "cutToGC: altTempFwd=%A altTFwd=%d altRev=None"
+                            altTemp altPos
+                    Some (altPos,altTemp) // only one worked
+                | None, Some (altPos,altTemp) -> 
+                    if debug then
+                        printfn "cutToGC: altTempRev=%A altTRev=%d altFwd=None"
+                            altTemp 
+                            altPos
+                    Some (altPos,altTemp) // only one worked
+                | Some (altPosFwd,altTempFwd),Some(altPosRev,altTempRev) ->
+                    if debug then
+                        printfn "cutToGC: altTempFwd=%A alTFwd=%d altTempRev=%A altTRev=%d"
+                            altTempFwd altPosFwd altTempRev altPosRev
+                    Some(
+                        if abs (altTempFwd-existingTemp) < abs(altTempRev-existingTemp) then
+                            altPosFwd,altTempFwd
+                        else altPosRev,altTempRev
+                    )
 
-            assert(altTempFwd > 10.0<C>)
-            assert(altTempRev > 10.0<C>)
-            if debug then
-                printfn "cutToGC: altTempFwd=%A altTFwd=%d altTempRev=%A altRFwd=%d"
-                    altTempFwd altTFwd altTempRev altTRev
+            match altBest with
+            | Some (_,temperature) -> assert (temperature > 10.0<C>) // ensure selected temp isn't crazy
+            | None -> ()
 
-            // Choose the direction to a GC that was least perturbative
-            let altT,altTemp =
-                if abs (altTempFwd-existingTemp) < abs(altTempRev-existingTemp) then
-                    altTFwd,altTempFwd
-                else altTRev,altTempRev
-
-            if abs (altTemp-existingTemp) <= p.ATPenalty then
-                if debug then printfn "cutToGC: using altGC option temp=%A f=%d t=%d" altTemp f altT 
-
-                { tag = ""; oligo = s.[f..altT] ; temp = altTemp ; offset = f+offset}
-            else
-                if debug then printfn "cutToGC: ignore altGC option temp=%A f=%d t=%d" temp f t 
+            match altBest with
+            | None ->
+                if debug then 
+                    printfn "cutToGC: no better altGC version, going with original f=%d t=%d oligo=%s"
+                        f 
+                        t 
+                        (arr2seq s.[f..t])
                 { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
+
+            | Some(_,altTemp) when (altTemp-existingTemp) > p.ATPenalty ->
+                // stick with original design, compromise too big
+                if debug then 
+                    printfn "cutToGC: ignore altGC option (compromise not worth it) temp=%A f=%d t=%d oligo=%s" 
+                        temp 
+                        f 
+                        t 
+                        (arr2seq s.[f..t])
+                { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
+            | Some(altPos,altTemp) -> 
+                if debug then 
+                    printfn "cutToGC: using altGC option temp=%A f=%d t=%d oligo=%s" 
+                        altTemp 
+                        f 
+                        altPos
+                        (arr2seq s.[f..altPos])
+
+                { tag = ""; oligo = s.[f..altPos] ; temp = altTemp ; offset = f+offset}
 
     let upper (s:char array) =
         [| for x in s ->
@@ -719,7 +757,9 @@ module primercore =
                     printf "No oligo in required length, so make max allowable max=%d templateLen=%d\n" 
                         pen.maxLength s'.Length
                 let oligo = s'.[..(min s'.Length pen.maxLength)-1] // longest allowed
-                Some( { tag=o.tag; oligo = oligo ; temp = temp pen oligo pen.maxLength; offset = o.offset } ) // calc temperature and offset is 0 plus their supplied offset
+                let oligoTemp = temp pen oligo oligo.Length
+                let oligo' = disruptPrimerDimers debug oligoTemp pen s' 0 (oligo.Length-1) o.offset
+                Some( { oligo' with tag=o.tag ; temp = temp pen oligo pen.maxLength; offset = o.offset } ) // calc temperature and offset is 0 plus their supplied offset
             | x -> x // 
                     
         | RIGHT -> failwith "should not get right here"
