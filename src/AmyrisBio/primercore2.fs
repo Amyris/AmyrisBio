@@ -407,7 +407,7 @@ module primercore =
         if initialTail < 3 then
             { tag = ""; oligo = s.[f..t] ; temp = existingTemp ; offset = f+offset } 
         else
-            printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail f t
+            if debug then printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail f t
             seq { for i in [1 ; -1 ; 2 ; -2 ; 3 ; -3 ; 4 ; -4; 5; -5 ; 6 ; -6] do
                     let t' = t+i
                     let len' = t'-f+1
@@ -419,7 +419,7 @@ module primercore =
             } 
             |> Seq.fold (min) (initialTail,t)
             |> fun (finalTail,finalT) ->
-                printfn "disruptPrimerDimers: finalTail of length %d deltaT=%d f=%d finalT=%d" finalTail (finalT-t) f finalT
+                if debug then printfn "disruptPrimerDimers: finalTail of length %d deltaT=%d f=%d finalT=%d" finalTail (finalT-t) f finalT
                 let finalTemp = temp p (s.[f..finalT]) (finalT-f+1)
                 { tag = ""; oligo = s.[f..finalT] ; temp = finalTemp; offset = f+offset } 
 
