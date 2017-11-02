@@ -640,12 +640,16 @@ module primercore =
                     let threeP = if r-l+1 > 5 then threePrimeStable false (s.[l..r]) else false
                     // get average of all nucleotide specific penalties
                     let seqP = Array.average seqPen.[l..r]
+                    // check ability to self dimerize
+                    let primerDimerPotential = longestTailTailOverlap (s.[l..r]) (s.[l..r])
                     let p = posCloseness + 
                             tempCloseness + 
                             lenCloseness + 
                             (if threeP then 0.0 else pen.threePrimeUnstablePenalty) + 
                             (if hasPoly then pen.polyPenalty else 0.0) + 
-                            seqP
+                            seqP +
+                            (if primerDimerPotential > 2 then (float primerDimerPotential)*3.0 else 0.0)
+
                     if (abs(t - tTemp) <= pen.tmMaxDifference) && (not polyC) then
                         yield
                            {l = l ; 
@@ -764,11 +768,6 @@ module primercore =
                     
         | RIGHT -> failwith "should not get right here"
         | CENTERLEFT -> designCenter debug pen s' seqPen offFn ( (float o.targetTemp)*1.0<C>)
-    
-                        (*with 
-                        | Some(a,b,c,d) -> Some( { tag=o.tag; oligo = a ; temp = b ; offset = c} ) 
-                        | None -> None  *)
-
         | CENTERRIGHT -> failwith "should not get centerright here"
 
     (*
