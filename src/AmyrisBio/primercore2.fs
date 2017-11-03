@@ -452,9 +452,11 @@ module primercore =
             | _ when t' > 1  && t'-f+1 > p.minLength -> findGCRev (t'-1)  
             | _ -> None
                                            
-        if p.ATPenalty < 0.0001<C> then
+        // did we already end on a G or a C
+        let endsWithGC = s.[t] |> base2GC = 1
+        if endsWithGC || p.ATPenalty < 0.0001<C> then
             // No GC optimization
-            if debug then printfn "cutToGC: no atPenalty, done len=%d" (t-f+1)
+            if debug then printfn "cutToGC: no atPenalty or endsWithGC already, done len=%d" (t-f+1)
             { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
         else
             // Is there an alternative starting point that would end on a G or C that's not too far away?                
