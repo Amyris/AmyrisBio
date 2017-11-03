@@ -71,7 +71,9 @@ type TestPrimer() = class
     /// Test that GC clamp finding is behaving sensibly by tempting designer with long AT rich regions
     member __.TestGCClamp() =
         let templates = 
-            [ 
+            [ "GAAATCTGTACCAACCGTATAGGTGAAAGAGACCCTTTATGG" ;
+              // "ATGCCATTCGTTGTTCCTAGAAGAAACCGTTCTTTGT" ;  // interesting case, but dimer check overrides GC clamp so will fail
+              "ATGGTCATTGCTGAAGTTCCTAAATTAGCCTCTGCC" ;
               "AAAAAAAAAATCTTAATAGATTAATTTAAACAGTATATGTACAGTTTTATATATATATAATATATATATATTATATATATATA" ;
               "AAAAAAAAAATCTTAATAGATTAATTTAAACAGTATATGTACAGTTTTATATATATATAATATATATATATTATATATATATACATATATAAAG" ;
               "AAAAAATCTTAATAGATTAATTTAAACAGTATATGTACAGTTTTATATATATATATATATATATATATATATATATATATATATATATATATATATATACATATATAAAG" ;
@@ -133,6 +135,7 @@ type TestPrimer() = class
                          targetTemp = 60.0<C>;
                          sequencePenalties = None}
                          
+            // set false->true for diagnostics debugging test cases
             match oligoDesign false pen task with
             | None -> 
                 Assert.Fail (sprintf "TestGClamp failed to make a primer for %s" template)
