@@ -245,12 +245,12 @@ module primercore =
 
         let maxOverlap = min s1.Length s2.Length
         seq {
-                        for i in 0..maxOverlap do
-                            let suffix1 = suffix s1 i
-                            let suffix2 = suffix s2 i
-                            if suffix1 = Amyris.Bio.biolib.revComp suffix2 then
-                                yield i
-                    } |> Seq.fold (max) 0
+            for i in 0..maxOverlap do
+                let suffix1 = suffix s1 i
+                let suffix2 = suffix s2 i
+                if suffix1 = Amyris.Bio.biolib.revComp suffix2 then
+                    yield i
+        } |> Seq.fold (max) 0
 
 
     /// Test if an oligo is self complementary
@@ -379,89 +379,90 @@ module primercore =
         let _,_,x = _temp p oligo N
         x
 
+    /// check longest self complementary tail for
+    /// oligo defined by f'->t' inclusive  
+    let localLongestTailTailOverlap (s:char []) primerFrom primerTo =
+        let l = primerTo-primerFrom+1
+        seq {
+            for i in l-1..-1..1 do
+                if seq { 0..i-1 } |> Seq.forall (fun j -> s.[primerTo-i+j] = biolib.rcBase (s.[primerTo-j])) then
+                    yield (i+1)
+        } 
+        |> Seq.tryFind(fun x -> x<> 0) 
+        |> fun x -> defaultArg x 0
+
     /// disrupt self primer dimers
     /// Tweak the stopping point of a primer if it would help avoid a 
     /// situation where last N bases of the primer are self complementary and
     /// can lead to formation of a primer dimer
     /// 5'-------CTTTAAAG-3'
     ///        3'GAAATTTC--------5'
-    let disruptPrimerDimers (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t offset =
+    /// primerLeft and primerRight delineate the range of bases in the underlying template s that are currently in the primer
+    let disruptPrimerDimers (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) primerLeft primerRight offset =
         if debug then
             printfn "disruptPrimerDimers: checking for problems"
-        let comp (b:char) = match b with | 'G'  -> 'C' | 'C'  -> 'G' | 'A'  -> 'T' | 'T'  -> 'A' | x -> x
 
-        /// check longest self complementary tail for
-        /// oligo defined by f'->t' inclusive  
-        let localLongestTailTailOverlap f' t' =
-            let l = t'-f'+1
-            seq {
-                for i in l-1..-1..1 do
-                    if seq { 0..i-1 } |> Seq.forall (fun j -> s.[t'-i+j] = comp (s.[t'-j])) then
-                        yield (i+1)
-            } |> Seq.tryFind(fun x -> x<> 0) 
-            |> function | None -> 0 | Some v -> v
-
-        let initialTail = localLongestTailTailOverlap f t
-        if debug then printfn "disruptPrimerDimers: initialTail of length %d for %s" initialTail (arr2seq s.[f..t])
+        let initialTail = localLongestTailTailOverlap s primerLeft primerRight
+        if debug then printfn "disruptPrimerDimers: initialTail of length %d for %s" initialTail (arr2seq s.[primerLeft..primerRight])
         // no-op
         if initialTail < 3 then
-            { tag = ""; oligo = s.[f..t] ; temp = existingTemp ; offset = f+offset } 
+            { tag = ""; oligo = s.[primerLeft..primerRight] ; temp = existingTemp ; offset = primerLeft+offset } 
         else
-            if debug then printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail f t
+            if debug then printfn "disruptPrimerDimers: found problematic initialTail of length %d initial f=%d t=%d" initialTail primerLeft primerRight
             seq { for i in [1 ; -1 ; 2 ; -2 ; 3 ; -3 ; 4 ; -4; 5; -5 ; 6 ; -6] do
-                    let t' = t+i
-                    let len' = t'-f+1
-                    if debug then printfn "disruptPrimerDimers: considering f=%d t=%d len=%d min=%d max=%d templateLen=%d" f t' len' p.minLength p.maxLength s.Length
-                    if len' >= p.minLength && len' <= p.maxLength && t' < s.Length && t' > f then
-                        let tail' = localLongestTailTailOverlap f t'
-                        if debug then printfn "disruptPrimerDimers: considering tail of length %d for %d" tail' t'
-                        yield tail',t'
+                    let primerRightNew = primerRight+i
+                    let primerLenNew = primerRightNew-primerLeft+1
+                    if debug then printfn "disruptPrimerDimers: considering f=%d t=%d len=%d min=%d max=%d templateLen=%d" primerLeft primerRightNew primerLenNew p.minLength p.maxLength s.Length
+                    if primerLenNew >= p.minLength && primerLenNew <= p.maxLength && primerRightNew < s.Length && primerRightNew > primerLeft then
+                        let tail' = localLongestTailTailOverlap s primerLeft primerRightNew
+                        if debug then printfn "disruptPrimerDimers: considering tail of length %d for %d" tail' primerRightNew
+                        yield tail',primerRightNew
             } 
-            |> Seq.fold (min) (initialTail,t)
+            |> Seq.fold (min) (initialTail,primerRight)
             |> fun (finalTail,finalT) ->
-                if debug then printfn "disruptPrimerDimers: finalTail of length %d deltaT=%d f=%d finalT=%d" finalTail (finalT-t) f finalT
-                let finalTemp = temp p (s.[f..finalT]) (finalT-f+1)
-                { tag = ""; oligo = s.[f..finalT] ; temp = finalTemp; offset = f+offset } 
+                if debug then printfn "disruptPrimerDimers: finalTail of length %d deltaT=%d f=%d finalT=%d" finalTail (finalT-primerRight) primerLeft finalT
+                let finalTemp = temp p (s.[primerLeft..finalT]) (finalT-primerLeft+1)
+                { tag = ""; oligo = s.[primerLeft..finalT] ; temp = finalTemp; offset = primerLeft+offset } 
 
 
     /// Cut out the region from fr -> to and extend
     /// Given oligo array from to gcInit offset , return oligo, temp, offset
-    let cutToGC (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) f t _startingGC offset =
+    let cutToGC (debug:bool) (existingTemp : float<C>) (p:PrimerParams) (s:char[]) primerFrom primerTo _startingGC offset =
         if debug then 
             printfn "cutToGC: starting design f=%d t=%d oligo=%s"
-                f 
-                t 
-                (arr2seq s.[f..t])
-        let rec findGCFwd t' (*gc' *) =
-            if t' < 0 || t' >= s.Length then
-                failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" t'
-            match s.[t'] with
-            |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..t'])-> 
-                Some (t', temp p (s.[f..t']) (t'-f+1)) // end on G/C
+                primerFrom 
+                primerTo 
+                (arr2seq s.[primerFrom..primerTo])
+        let rec findGCFwd newRight =
+            if newRight < 0 || newRight >= s.Length then
+                failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" newRight
+            match s.[newRight] with
+            |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..newRight])-> 
+                Some (newRight, temp p (s.[primerFrom..newRight]) (newRight-primerFrom+1)) // end on G/C
                     
-            | _ when t' < (s.Length-1) && t'-f+1 < p.maxLength -> findGCFwd (t'+1)
+            | _ when newRight < (s.Length-1) && newRight-primerFrom+1 < p.maxLength -> findGCFwd (newRight+1)
             | _ -> None
 
-        let rec findGCRev t' =
-            if t' < 0 || t' >= s.Length then
-                failwithf "ERROR: primercord findGC array bounds exception t'=%d\n" t'
-            match s.[t'] with
-            |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..t']) -> 
-                Some (t', temp p (s.[f..t']) (t'-f+1))
+        let rec findGCRev newRight =
+            if newRight < 0 || newRight >= s.Length then
+                failwithf "ERROR: primercord findGC array bounds exception newRight=%d\n" newRight
+            match s.[newRight] with
+            |'G' | 'g' | 'C' | 'c' when threePrimeStable false (s.[..newRight]) -> 
+                Some (newRight, temp p (s.[primerFrom..newRight]) (newRight-primerFrom+1))
                     
-            | _ when t' > 1  && t'-f+1 > p.minLength -> findGCRev (t'-1)  
+            | _ when newRight > 1  && newRight-primerFrom+1 > p.minLength -> findGCRev (newRight-1)  
             | _ -> None
                                            
         // did we already end on a G or a C
-        let endsWithGC = s.[t] |> base2GC = 1
+        let endsWithGC = s.[primerTo] |> base2GC = 1
         if endsWithGC || p.ATPenalty < 0.0001<C> then
             // No GC optimization
-            if debug then printfn "cutToGC: no atPenalty or endsWithGC already, done len=%d" (t-f+1)
-            { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
+            if debug then printfn "cutToGC: no atPenalty or endsWithGC already, done len=%d" (primerTo-primerFrom+1)
+            { tag = ""; oligo = s.[primerFrom..primerTo] ; temp = temp p (s.[primerFrom..primerTo]) (primerTo-primerFrom+1); offset = primerFrom+offset } 
         else
             // Is there an alternative starting point that would end on a G or C that's not too far away?                
             let altBest =
-                match findGCFwd t,findGCRev t with
+                match findGCFwd primerTo,findGCRev primerTo with
                 | None,None -> None // no better option
                 | Some (altPos,altTemp),None ->
                     if debug then
@@ -478,43 +479,44 @@ module primercore =
                     if debug then
                         printfn "cutToGC: altTempFwd=%A alTFwd=%d altTempRev=%A altTRev=%d"
                             altTempFwd altPosFwd altTempRev altPosRev
-                    Some(
-                        if abs (altTempFwd-existingTemp) < abs(altTempRev-existingTemp) then
-                            altPosFwd,altTempFwd
-                        else altPosRev,altTempRev
-                    )
+                    if abs (altTempFwd-existingTemp) < abs(altTempRev-existingTemp) then
+                        altPosFwd,altTempFwd
+                    else altPosRev,altTempRev
+                    |> Some
 
             match altBest with
-            | Some (_,temperature) -> assert (temperature > 10.0<C>) // ensure selected temp isn't crazy
+            | Some (_,temperature) -> 
+                    if temperature < 10.0<C> then
+                        failwithf "wikitemp1000: fail design temperature of %A < 10C" temperature // ensure selected temp isn't crazy
             | None -> ()
 
             match altBest with
             | None ->
                 if debug then 
                     printfn "cutToGC: no better altGC version, going with original f=%d t=%d oligo=%s"
-                        f 
-                        t 
-                        (arr2seq s.[f..t])
-                { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
+                        primerFrom 
+                        primerTo 
+                        (arr2seq s.[primerFrom..primerTo])
+                { tag = ""; oligo = s.[primerFrom..primerTo] ; temp = temp p (s.[primerFrom..primerTo]) (primerTo-primerFrom+1); offset = primerFrom+offset } 
 
             | Some(_,altTemp) when (altTemp-existingTemp) > p.ATPenalty ->
                 // stick with original design, compromise too big
                 if debug then 
                     printfn "cutToGC: ignore altGC option (compromise not worth it) temp=%A f=%d t=%d oligo=%s" 
                         temp 
-                        f 
-                        t 
-                        (arr2seq s.[f..t])
-                { tag = ""; oligo = s.[f..t] ; temp = temp p (s.[f..t]) (t-f+1); offset = f+offset } 
+                        primerFrom 
+                        primerTo 
+                        (arr2seq s.[primerFrom..primerTo])
+                { tag = ""; oligo = s.[primerFrom..primerTo] ; temp = temp p (s.[primerFrom..primerTo]) (primerTo-primerFrom+1); offset = primerFrom+offset } 
             | Some(altPos,altTemp) -> 
                 if debug then 
                     printfn "cutToGC: using altGC option temp=%A f=%d t=%d oligo=%s" 
                         altTemp 
-                        f 
+                        primerFrom 
                         altPos
-                        (arr2seq s.[f..altPos])
+                        (arr2seq s.[primerFrom..altPos])
 
-                { tag = ""; oligo = s.[f..altPos] ; temp = altTemp ; offset = f+offset}
+                { tag = ""; oligo = s.[primerFrom..altPos] ; temp = altTemp ; offset = primerFrom+offset}
 
     let upper (s:char array) =
         [| for x in s ->
@@ -561,11 +563,11 @@ module primercore =
                         if debug then printfn "designLeft, stopping at nextBase-1=%d thisTemp=%f" (nextBase-1) (thisTemp/1.0<C>)
                         Some(cutToGC debug lastTemp p s 0 (nextBase-1) gcCount offset)
 
-        match designLeftInternal sInitUpper nextBase gcCount (0.0<C>) with
-        | None -> None
-        | Some prePDCheck ->
+        designLeftInternal sInitUpper nextBase gcCount (0.0<C>) 
+        |> Option.map (fun prePDCheck ->
             // possible final tweaks if we have made a primer-dimer with the tail
-            Some ( disruptPrimerDimers debug prePDCheck.temp p sInitUpper 0 (prePDCheck.oligo.Length-1) offset)
+            disruptPrimerDimers debug prePDCheck.temp p sInitUpper 0 (prePDCheck.oligo.Length-1) offset
+           )
     
     /// Check for the presence of mono- or dinucleotide repeats longer than N
     let hasPolyrun n (s:char[]) =

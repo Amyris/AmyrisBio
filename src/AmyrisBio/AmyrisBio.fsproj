@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Amyris.Bio</RootNamespace>
     <AssemblyName>Amyris.Bio</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
     <Name>Amyris.Bio</Name>
     <TargetFrameworkProfile />
