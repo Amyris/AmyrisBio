@@ -183,6 +183,15 @@ module primercore =
         | 'T','A'               -> {h= -7.2<Cal/M>; s= -21.3<Cal/M/K> }
         | 'T','G' | 'C','A'     -> {h= -8.5<Cal/M>; s= -22.7<Cal/M/K>}
         | 'C','G'               -> {h= -10.6<Cal/M>; s= -27.2<Cal/M/K>}
+        | 'G','N'               -> {h= -8.600<Cal/M>; s= -22.225<Cal/M/K> }
+        | 'A','N'               -> {h= -7.825<Cal/M>; s= -21.500<Cal/M/K> }
+        | 'T','N'               -> {h= -7.950<Cal/M>; s= -22.100<Cal/M/K> }
+        | 'C','N'               -> {h= -8.725<Cal/M>; s= -22.700<Cal/M/K> }
+        | 'N','G'               -> {h= -8.725<Cal/M>; s= -22.700<Cal/M/K> }
+        | 'N','A'               -> {h= -7.950<Cal/M>; s= -22.100<Cal/M/K> }
+        | 'N','T'               -> {h= -7.825<Cal/M>; s= -21.500<Cal/M/K> }
+        | 'N','C'               -> {h= -8.600<Cal/M>; s= -22.225<Cal/M/K> }
+        | 'N','N'               -> {h= -8.275000<Cal/M>; s= -22.131250<Cal/M/K> }
         | _ -> failwith "bad nucpair"
 
     let deltaG (a:char) (b:char) =
@@ -197,6 +206,15 @@ module primercore =
         | 'C','G'               -> -2.17
         | 'G','C'               -> -2.24
         | 'G','G' | 'C','C'     -> -1.84
+        | 'G','N'               -> -1.705
+        | 'N','G'               -> -1.685
+        | 'A','N'               -> -1.15
+        | 'N','A'               -> -1.0825
+        | 'T','N'               -> -1.0825
+        | 'N','T'               -> -1.15
+        | 'C','N'               -> -1.685
+        | 'N','C'               -> -1.705
+        | 'N','N'               -> -1.405625
         | _ -> failwithf "bad nucpair /%c/%c/" a b    
 
     let deltaG2 (a:char) (b:char) =
@@ -211,11 +229,21 @@ module primercore =
         | 'C','G'               -> -3.6
         | 'G','C'               -> -3.1
         | 'G','G' | 'C','C'     -> -3.1
+        | 'G','N'               -> -2.275
+        | 'N','G'               -> -2.55
+        | 'A','N'               -> -1.575
+        | 'N','A'               -> -1.575
+        | 'T','N'               -> -1.575
+        | 'N','T'               -> -1.575
+        | 'C','N'               -> -2.55
+        | 'N','C'               -> -2.275
+        | 'N','N'               -> -1.99375
         | _ -> failwithf "bad nucpair /%c/%c/" a b   
     let initG2 (c:char) =
         match c with
         | 'G' | 'C' -> -1.96 // 5.0
         | 'A' | 'T' -> -1.96 - 0.05 // 6.0
+        | 'N' -> (-1.96 - 0.05)/2.0 // 6.0
         | _  -> failwithf "bad nuc %c in initG2" c
              
     /// 3' end of primer is special.  We would like it to be
@@ -257,6 +285,7 @@ module primercore =
             match a with
             | 'A' | 'T' -> {h=2.3<Cal/M> ; s=4.1<Cal/M/K>}
             | 'C' | 'G' -> {h=0.1<Cal/M>;s= -2.8<Cal/M/K>}
+            | 'N' -> {h=1.2<Cal/M>;s= 0.65<Cal/M/K>} // Take average for unknown case
             | _ -> failwith (sprintf "bad start base '%c'" a)
 
         let rec score i hs =
@@ -863,4 +892,4 @@ module primercore =
                         if debug then
                             printf "Best: pen=%f %d/%d/%d l1=%d l2=%d\n" best.pen best.revTemp best.overTemp best.fwdTemp best.fwd.Length best.rev.Length
                         Some(best.fwd,best.rev)
-      *)  
+      *)
