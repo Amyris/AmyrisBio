@@ -5,13 +5,13 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("AmyrisBio")>]
 [<assembly: AssemblyProductAttribute("AmyrisBio")>]
 [<assembly: AssemblyDescriptionAttribute("Amyris FSharp BioLib")>]
-[<assembly: AssemblyVersionAttribute("2.0.22")>]
-[<assembly: AssemblyFileVersionAttribute("2.0.22")>]
+[<assembly: AssemblyVersionAttribute("2.1.0")>]
+[<assembly: AssemblyFileVersionAttribute("2.1.0")>]
 do ()
 
 module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyTitle = "AmyrisBio"
     let [<Literal>] AssemblyProduct = "AmyrisBio"
     let [<Literal>] AssemblyDescription = "Amyris FSharp BioLib"
-    let [<Literal>] AssemblyVersion = "2.0.22"
-    let [<Literal>] AssemblyFileVersion = "2.0.22"
+    let [<Literal>] AssemblyVersion = "2.1.0"
+    let [<Literal>] AssemblyFileVersion = "2.1.0"

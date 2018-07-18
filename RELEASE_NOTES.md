@@ -1,3 +1,7 @@
+### v2.1.0 -- July 18, 2018
+* Add support for generating oligos with ambiguous bases.
+* Update FSharp.Core version and use paket management.
+
 ### v2.0.22 -- August 3, 2017
 * Fix index error in SW alignment.
 
