@@ -1,15 +1,12 @@
 source https://nuget.org/api/v2
 
-nuget FSharp.Core
-
 group Build
   source https://nuget.org/api/v2
-
   nuget FSharp.Formatting
 
 group Test
   source https://nuget.org/api/v2
-  
+  nuget FSharp.Core
   nuget NUnit ~> 3
   nuget NUnit.ConsoleRunner ~> 3
   nuget Microsoft.NET.Test.Sdk
