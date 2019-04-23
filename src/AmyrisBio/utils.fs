@@ -230,25 +230,6 @@ module utils =
 
     let countLines file =  Seq.fold (fun count _(*line*) -> count + 1) 0 (eachLineIn file) 
 
-    // Registry utils
-    // Registry handling    
-    open Microsoft.Win32
-
-    let ensureAmyrisKey () =  
-        let key = Registry.CurrentUser.OpenSubKey("Software",true)
-        match key.OpenSubKey("Amyris",true) with
-            | null ->
-                key.CreateSubKey("Amyris")
-            | anyKey -> anyKey
-
-
-    let getSetKey (key:RegistryKey) keyName keyValue =
-        match key.GetValue(keyName) with
-            | :? string as x -> x
-            | _ -> 
-                key.SetValue(keyName,keyValue)
-                keyValue
-
     // Sequence handling routines
     /// Reverse complement a DNA sequence
     /// This version is deprecated, please use biolib.revComp instead

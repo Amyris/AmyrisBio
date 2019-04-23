@@ -5,7 +5,7 @@ open Amyris.Bio.dnaops
 open Amyris.Bio.biolib
 open Amyris.Bio.utils
 
-let refTestGenome = @"..\..\test_data\S288C.fsa" |> Amyris.Bio.utils.smashSlash
+let refTestGenome = @"..\..\..\test_data\S288C.fsa" |> Amyris.Bio.utils.smashSlash
 [<TestFixture>]
 type TestDnaops() = class 
     
