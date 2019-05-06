@@ -39,58 +39,61 @@ module biolib =
     // Reference: J. Mol. Biol. 179:125-142(1984).
     // https://web.expasy.org/protscale/pscale/Hphob.Eisenberg.html
 
-    let aminoAcidProperties = [
-        Ala, { trigram="Ala" ; letter = 'A' ; hydrophobicity = Some 0.620 }
-        Arg, { trigram="Arg" ; letter = 'R' ; hydrophobicity = Some -2.530 }
-        Asn, { trigram="Asn" ; letter = 'N' ; hydrophobicity = Some -0.780 }
-        Asp, { trigram="Asp" ; letter = 'D' ; hydrophobicity = Some -0.900 }
-        Cys, { trigram="Cys" ; letter = 'C' ; hydrophobicity = Some 0.290 }
-        Gln, { trigram="Gln" ; letter = 'Q' ; hydrophobicity = Some -0.850 }
-        Glu, { trigram="Glu" ; letter = 'E' ; hydrophobicity = Some -0.740 }
-        Gly, { trigram="Gly" ; letter = 'G' ; hydrophobicity = Some 0.480 }
-        His, { trigram="His" ; letter = 'H' ; hydrophobicity = Some -0.400 }
-        Ile, { trigram="Ile" ; letter = 'I' ; hydrophobicity = Some 1.380 }
-        Leu, { trigram="Leu" ; letter = 'L' ; hydrophobicity = Some 1.060 }
-        Lys, { trigram="Lys" ; letter = 'K' ; hydrophobicity = Some -1.500 }
-        Met, { trigram="Met" ; letter = 'M' ; hydrophobicity = Some 0.640 }
-        Phe, { trigram="Phe" ; letter = 'F' ; hydrophobicity = Some 1.190 }
-        Pro, { trigram="Pro" ; letter = 'P' ; hydrophobicity = Some 0.120 }
-        Ser, { trigram="Ser" ; letter = 'S' ; hydrophobicity = Some -0.180 }
-        Thr, { trigram="Thr" ; letter = 'T' ; hydrophobicity = Some -0.050 }
-        Trp, { trigram="Trp" ; letter = 'W' ; hydrophobicity = Some 0.810 }
-        Tyr, { trigram="Tyr" ; letter = 'Y' ; hydrophobicity = Some 0.260 }
-        Val, { trigram="Val" ; letter = 'V' ; hydrophobicity = Some 1.080 }
-        Sec, { trigram="Sec" ; letter = 'U' ; hydrophobicity = None } // not documented int Eisenberg
-        End, { trigram="End" ; letter = '*' ; hydrophobicity = None }
-    ] |> Map.ofList
+    let aminoAcidProperties = 
+        [
+            (Ala, { trigram="Ala" ; letter = 'A' ; hydrophobicity = Some 0.620 })
+            (Arg, { trigram="Arg" ; letter = 'R' ; hydrophobicity = Some -2.530 })
+            (Asn, { trigram="Asn" ; letter = 'N' ; hydrophobicity = Some -0.780 })
+            (Asp, { trigram="Asp" ; letter = 'D' ; hydrophobicity = Some -0.900 })
+            (Cys, { trigram="Cys" ; letter = 'C' ; hydrophobicity = Some 0.290 })
+            (Gln, { trigram="Gln" ; letter = 'Q' ; hydrophobicity = Some -0.850 })
+            (Glu, { trigram="Glu" ; letter = 'E' ; hydrophobicity = Some -0.740 })
+            (Gly, { trigram="Gly" ; letter = 'G' ; hydrophobicity = Some 0.480 })
+            (His, { trigram="His" ; letter = 'H' ; hydrophobicity = Some -0.400 })
+            (Ile, { trigram="Ile" ; letter = 'I' ; hydrophobicity = Some 1.380 })
+            (Leu, { trigram="Leu" ; letter = 'L' ; hydrophobicity = Some 1.060 })
+            (Lys, { trigram="Lys" ; letter = 'K' ; hydrophobicity = Some -1.500 })
+            (Met, { trigram="Met" ; letter = 'M' ; hydrophobicity = Some 0.640 })
+            (Phe, { trigram="Phe" ; letter = 'F' ; hydrophobicity = Some 1.190 })
+            (Pro, { trigram="Pro" ; letter = 'P' ; hydrophobicity = Some 0.120 })
+            (Ser, { trigram="Ser" ; letter = 'S' ; hydrophobicity = Some -0.180 })
+            (Thr, { trigram="Thr" ; letter = 'T' ; hydrophobicity = Some -0.050 })
+            (Trp, { trigram="Trp" ; letter = 'W' ; hydrophobicity = Some 0.810 })
+            (Tyr, { trigram="Tyr" ; letter = 'Y' ; hydrophobicity = Some 0.260 })
+            (Val, { trigram="Val" ; letter = 'V' ; hydrophobicity = Some 1.080 })
+            (Sec, { trigram="Sec" ; letter = 'U' ; hydrophobicity = None }) // not documented int Eisenberg
+            (End, { trigram="End" ; letter = '*' ; hydrophobicity = None })
+        ] |> Map.ofList
 
-    function aaLetterToSymbolic (aa:char) =
-        | 'R' -> Arg
-        | 'H' -> His
-        | 'K' -> Lys
-        | 'D' -> Asp
-        | 'E' -> Glu
-        | 'S' -> Ser
-        | 'T' -> Thr
-        | 'N' -> Asn
-        | 'Q' -> Gln
-        | 'C' -> Cys
-        | 'U' -> Sec
-        | 'G' -> Gly
-        | 'P' -> Pro
-        | 'A' -> Ala
-        | 'V' -> Val
-        | 'I' -> Ile
-        | 'L' -> Leu
-        | 'M' -> Met
-        | 'F' -> Phe
-        | 'Y' -> Tyr
-        | 'W' -> Trp
-        | '*' -> End
+    let aaLetterToSymbolic (aa:char) =
+        match aa with
+            | 'R' -> Arg
+            | 'H' -> His
+            | 'K' -> Lys
+            | 'D' -> Asp
+            | 'E' -> Glu
+            | 'S' -> Ser
+            | 'T' -> Thr
+            | 'N' -> Asn
+            | 'Q' -> Gln
+            | 'C' -> Cys
+            | 'U' -> Sec
+            | 'G' -> Gly
+            | 'P' -> Pro
+            | 'A' -> Ala
+            | 'V' -> Val
+            | 'I' -> Ile
+            | 'L' -> Leu
+            | 'M' -> Met
+            | 'F' -> Phe
+            | 'Y' -> Tyr
+            | 'W' -> Trp
+            | '*' -> End
+            | _ -> failwithf "ERROR: unknown amino acid letter '%c' in aaLetterToSymbolic" aa
 
 
     /// Translates amino acid represented with one character to a trigram, eg 'W' -> "Trp" , '*' -> "End"
-    let aaLetterToSymbolic (aa:char) =
+    let aaTrigramToSymbolic (aa:string) =
         match aa with 
         | "Arg" -> Arg
         | "His" -> His
@@ -114,7 +117,7 @@ module biolib =
         | "Tyr" -> Tyr
         | "Trp" -> Trp
         | "End" -> End
-        | _ -> failwithf "bad aa '%c'" aa
+        | _ -> failwithf "bad aa '%s' in aaLetterToSymbolic" aa
 
     /// Translates amino acid represented with one character to a trigram, eg 'W' -> "Trp" , '*' -> "End"
     let aaLetterToTrigram (aa:char) =
