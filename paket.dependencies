@@ -2,10 +2,15 @@ source https://nuget.org/api/v2
 
 group Build
   source https://nuget.org/api/v2
+  framework: >= netstandard2.0,netcoreapp2.0
+  
   nuget FSharp.Formatting
 
 group Test
   source https://nuget.org/api/v2
+  storage none
+  framework: >= netstandard2.0,netcoreapp2.0
+  
   nuget FSharp.Core
   nuget NUnit ~> 3
   nuget NUnit.ConsoleRunner ~> 3

@@ -102,6 +102,7 @@ Target.create "AssemblyInfo" (fun _ ->
           AssemblyInfo.Product project
           AssemblyInfo.Description summary
           AssemblyInfo.Version release.AssemblyVersion
+          AssemblyInfo.InformationalVersion (Git.Information.getCurrentHash())
           AssemblyInfo.FileVersion release.AssemblyVersion ]
 
     let getProjectDetails projectPath =
@@ -137,7 +138,11 @@ Target.create "CopyBinaries" (fun _ ->
 // Clean build results
 
 Target.create "Clean" (fun _ ->
-    Shell.cleanDirs ["bin"; "temp"]
+    Shell.cleanDirs
+        [ "bin"
+          "temp"
+          "src/AmyrisBio/bin"
+          "tests/AmyrisBio.Tests/bin"]
 )
 
 Target.create "CleanDocs" (fun _ ->
@@ -148,16 +153,14 @@ Target.create "CleanDocs" (fun _ ->
 // Build library & test project
 
 Target.create "Build" (fun _ ->
-    !! solutionFile
-#if MONO
-    |> MSBuild.runReleaseExt id "" [ ("DefineConstants","MONO") ] "Rebuild"
-#else
-    |> MSBuild.runRelease id "" "Rebuild"
-#endif
-    |> ignore
-
-    
-)
+    !! "src/**/*.??proj"
+    ++ "tests/**/*.??proj"
+    |> Array.ofSeq
+    |> Array.iter (fun project ->
+        project
+        |> DotNet.build (fun buildOptions ->
+            { buildOptions with
+                Configuration = DotNet.BuildConfiguration.Release })))
 
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
