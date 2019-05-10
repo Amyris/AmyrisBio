@@ -17,8 +17,7 @@
     nuget Fake.Core.ReleaseNotes
     nuget Fake.DotNet.Fsi
     nuget Fake.Core.UserInput
-    nuget Fake.Api.GitHub
-    nuget FSharp.Formatting //"
+    nuget Fake.Api.GitHub //"
 
 open System
 open System.IO
@@ -145,10 +144,6 @@ Target.create "Clean" (fun _ ->
           "tests/AmyrisBio.Tests/bin"]
 )
 
-Target.create "CleanDocs" (fun _ ->
-    Shell.cleanDirs ["docs/output"]
-)
-
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
@@ -174,6 +169,8 @@ Target.create "RunTests" (fun _ ->
 Target.create "NuGet" (fun _ ->
     Paket.pack(fun p ->
         { p with
+            // Workaround until this is fixed: https://github.com/fsharp/FAKE/issues/2242
+            ToolPath = Path.Combine(".", ".paket", (if Environment.isWindows then "paket.exe" else "paket"))
             OutputPath = "bin"
             Version = release.NugetVersion
             ReleaseNotes = String.toLines release.Notes})
@@ -182,6 +179,8 @@ Target.create "NuGet" (fun _ ->
 Target.create "PublishNuget" (fun _ ->
     Paket.push(fun p ->
         { p with
+            // Workaround until this is fixed: https://github.com/fsharp/FAKE/issues/2242
+            ToolPath = Path.Combine(".", ".paket", (if Environment.isWindows then "paket.exe" else "paket"))
             WorkingDir = "bin" })
 )
 
