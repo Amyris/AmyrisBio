@@ -192,3 +192,4 @@ docs/tools/FSharp.Formatting.svclog
 **/AssemblyInfo.fs
 .paket/*
 .fake/*
+.tool/*
