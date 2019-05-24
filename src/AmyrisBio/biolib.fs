@@ -30,121 +30,143 @@ module biolib =
             aa.[i]
     
     /// Symbolic trigram representations of amino acids
-    type AminoAcidSymbols = Arg|His|Lys|Asp|Glu|Ser|Thr|Asn|Gln|Cys|Sec|Gly|Pro|Ala|Val|Ile|Leu|Met|Phe|Tyr|Trp|End
+    type AminoAcidSymbol =
+        | Arg
+        | His
+        | Lys
+        | Asp
+        | Glu
+        | Ser
+        | Thr
+        | Asn
+        | Gln
+        | Cys
+        | Sec
+        | Gly
+        | Pro
+        | Ala
+        | Val
+        | Ile
+        | Leu
+        | Met
+        | Phe
+        | Tyr
+        | Trp
+        | End
 
-    type AminoAcidProperties = { trigram : string ; letter : char ; hydrophobicity : float option}
+    type AminoAcidProperties =
+        { trigram : string
+          letter : char
+          hydrophobicity : float option }
 
     // Amino acid scale: Normalized consensus hydrophobicity scale.
     // Author(s): Eisenberg D., Schwarz E., Komarony M., Wall R.
     // Reference: J. Mol. Biol. 179:125-142(1984).
     // https://web.expasy.org/protscale/pscale/Hphob.Eisenberg.html
 
-    let aminoAcidProperties = 
-        [
-            (Ala, { trigram="Ala" ; letter = 'A' ; hydrophobicity = Some 0.620 })
-            (Arg, { trigram="Arg" ; letter = 'R' ; hydrophobicity = Some -2.530 })
-            (Asn, { trigram="Asn" ; letter = 'N' ; hydrophobicity = Some -0.780 })
-            (Asp, { trigram="Asp" ; letter = 'D' ; hydrophobicity = Some -0.900 })
-            (Cys, { trigram="Cys" ; letter = 'C' ; hydrophobicity = Some 0.290 })
-            (Gln, { trigram="Gln" ; letter = 'Q' ; hydrophobicity = Some -0.850 })
-            (Glu, { trigram="Glu" ; letter = 'E' ; hydrophobicity = Some -0.740 })
-            (Gly, { trigram="Gly" ; letter = 'G' ; hydrophobicity = Some 0.480 })
-            (His, { trigram="His" ; letter = 'H' ; hydrophobicity = Some -0.400 })
-            (Ile, { trigram="Ile" ; letter = 'I' ; hydrophobicity = Some 1.380 })
-            (Leu, { trigram="Leu" ; letter = 'L' ; hydrophobicity = Some 1.060 })
-            (Lys, { trigram="Lys" ; letter = 'K' ; hydrophobicity = Some -1.500 })
-            (Met, { trigram="Met" ; letter = 'M' ; hydrophobicity = Some 0.640 })
-            (Phe, { trigram="Phe" ; letter = 'F' ; hydrophobicity = Some 1.190 })
-            (Pro, { trigram="Pro" ; letter = 'P' ; hydrophobicity = Some 0.120 })
-            (Ser, { trigram="Ser" ; letter = 'S' ; hydrophobicity = Some -0.180 })
-            (Thr, { trigram="Thr" ; letter = 'T' ; hydrophobicity = Some -0.050 })
-            (Trp, { trigram="Trp" ; letter = 'W' ; hydrophobicity = Some 0.810 })
-            (Tyr, { trigram="Tyr" ; letter = 'Y' ; hydrophobicity = Some 0.260 })
-            (Val, { trigram="Val" ; letter = 'V' ; hydrophobicity = Some 1.080 })
-            (Sec, { trigram="Sec" ; letter = 'U' ; hydrophobicity = None }) // not documented int Eisenberg
-            (End, { trigram="End" ; letter = '*' ; hydrophobicity = None })
-        ] |> Map.ofList
+    let aminoAcidProperties : Map<AminoAcidSymbol, AminoAcidProperties> = 
+        [ (Ala, { trigram="Ala" ; letter = 'A' ; hydrophobicity = Some 0.620 })
+          (Arg, { trigram="Arg" ; letter = 'R' ; hydrophobicity = Some -2.530 })
+          (Asn, { trigram="Asn" ; letter = 'N' ; hydrophobicity = Some -0.780 })
+          (Asp, { trigram="Asp" ; letter = 'D' ; hydrophobicity = Some -0.900 })
+          (Cys, { trigram="Cys" ; letter = 'C' ; hydrophobicity = Some 0.290 })
+          (Gln, { trigram="Gln" ; letter = 'Q' ; hydrophobicity = Some -0.850 })
+          (Glu, { trigram="Glu" ; letter = 'E' ; hydrophobicity = Some -0.740 })
+          (Gly, { trigram="Gly" ; letter = 'G' ; hydrophobicity = Some 0.480 })
+          (His, { trigram="His" ; letter = 'H' ; hydrophobicity = Some -0.400 })
+          (Ile, { trigram="Ile" ; letter = 'I' ; hydrophobicity = Some 1.380 })
+          (Leu, { trigram="Leu" ; letter = 'L' ; hydrophobicity = Some 1.060 })
+          (Lys, { trigram="Lys" ; letter = 'K' ; hydrophobicity = Some -1.500 })
+          (Met, { trigram="Met" ; letter = 'M' ; hydrophobicity = Some 0.640 })
+          (Phe, { trigram="Phe" ; letter = 'F' ; hydrophobicity = Some 1.190 })
+          (Pro, { trigram="Pro" ; letter = 'P' ; hydrophobicity = Some 0.120 })
+          (Ser, { trigram="Ser" ; letter = 'S' ; hydrophobicity = Some -0.180 })
+          (Thr, { trigram="Thr" ; letter = 'T' ; hydrophobicity = Some -0.050 })
+          (Trp, { trigram="Trp" ; letter = 'W' ; hydrophobicity = Some 0.810 })
+          (Tyr, { trigram="Tyr" ; letter = 'Y' ; hydrophobicity = Some 0.260 })
+          (Val, { trigram="Val" ; letter = 'V' ; hydrophobicity = Some 1.080 })
+          (Sec, { trigram="Sec" ; letter = 'U' ; hydrophobicity = None }) // not documented int Eisenberg
+          (End, { trigram="End" ; letter = '*' ; hydrophobicity = None }) ]
+        |> Map.ofList
 
-    let aaLetterToSymbolic (aa:char) =
-        match aa with
-            | 'R' -> Arg
-            | 'H' -> His
-            | 'K' -> Lys
-            | 'D' -> Asp
-            | 'E' -> Glu
-            | 'S' -> Ser
-            | 'T' -> Thr
-            | 'N' -> Asn
-            | 'Q' -> Gln
-            | 'C' -> Cys
-            | 'U' -> Sec
-            | 'G' -> Gly
-            | 'P' -> Pro
-            | 'A' -> Ala
-            | 'V' -> Val
-            | 'I' -> Ile
-            | 'L' -> Leu
-            | 'M' -> Met
-            | 'F' -> Phe
-            | 'Y' -> Tyr
-            | 'W' -> Trp
-            | '*' -> End
-            | _ -> failwithf "ERROR: unknown amino acid letter '%c' in aaLetterToSymbolic" aa
+    /// Translates amino acid represented with one character to a trigram, eg 'R' -> AminoAcidSymbol.Arg
+    let aaLetterToSymbol : char -> Result<AminoAcidSymbol, string> = function
+            | 'R' -> Ok Arg
+            | 'H' -> Ok His
+            | 'K' -> Ok Lys
+            | 'D' -> Ok Asp
+            | 'E' -> Ok Glu
+            | 'S' -> Ok Ser
+            | 'T' -> Ok Thr
+            | 'N' -> Ok Asn
+            | 'Q' -> Ok Gln
+            | 'C' -> Ok Cys
+            | 'U' -> Ok Sec
+            | 'G' -> Ok Gly
+            | 'P' -> Ok Pro
+            | 'A' -> Ok Ala
+            | 'V' -> Ok Val
+            | 'I' -> Ok Ile
+            | 'L' -> Ok Leu
+            | 'M' -> Ok Met
+            | 'F' -> Ok Phe
+            | 'Y' -> Ok Tyr
+            | 'W' -> Ok Trp
+            | '*' -> Ok End
+            | aa -> Error <| sprintf "ERROR: unknown amino acid letter '%c' in aaLetterToSymbolic" aa
 
 
-    /// Translates amino acid represented with one character to a trigram, eg 'W' -> "Trp" , '*' -> "End"
-    let aaTrigramToSymbolic (aa:string) =
-        match aa with 
-        | "Arg" -> Arg
-        | "His" -> His
-        | "Lys" -> Lys
-        | "Asp" -> Asp
-        | "Glu" -> Glu
-        | "Ser" -> Ser
-        | "Thr" -> Thr
-        | "Asn" -> Asn
-        | "Gln" -> Gln
-        | "Cys" -> Cys
-        | "Sec" -> Sec
-        | "Gly" -> Gly
-        | "Pro" -> Pro
-        | "Ala" -> Ala
-        | "Val" -> Val
-        | "Ile" -> Ile
-        | "Leu" -> Leu
-        | "Met" -> Met
-        | "Phe" -> Phe
-        | "Tyr" -> Tyr
-        | "Trp" -> Trp
-        | "End" -> End
-        | _ -> failwithf "bad aa '%s' in aaLetterToSymbolic" aa
+    /// Translates amino acid represented with trigram string to a trigram, eg "Arg" -> AminoAcidSymbol.Arg
+    let aaTrigramToSymbol : string -> Result<AminoAcidSymbol, string> = function
+        | "Arg" -> Ok Arg
+        | "His" -> Ok His
+        | "Lys" -> Ok Lys
+        | "Asp" -> Ok Asp
+        | "Glu" -> Ok Glu
+        | "Ser" -> Ok Ser
+        | "Thr" -> Ok Thr
+        | "Asn" -> Ok Asn
+        | "Gln" -> Ok Gln
+        | "Cys" -> Ok Cys
+        | "Sec" -> Ok Sec
+        | "Gly" -> Ok Gly
+        | "Pro" -> Ok Pro
+        | "Ala" -> Ok Ala
+        | "Val" -> Ok Val
+        | "Ile" -> Ok Ile
+        | "Leu" -> Ok Leu
+        | "Met" -> Ok Met
+        | "Phe" -> Ok Phe
+        | "Tyr" -> Ok Tyr
+        | "Trp" -> Ok Trp
+        | "End" -> Ok End
+        | aa -> Error <| sprintf "bad aa '%s' in aaLetterToSymbolic" aa
 
-    /// Translates amino acid represented with one character to a trigram, eg 'W' -> "Trp" , '*' -> "End"
-    let aaLetterToTrigram (aa:char) =
-        match aa with 
-        | 'R' -> "Arg"
-        | 'H' -> "His"
-        | 'K' -> "Lys"
-        | 'D' -> "Asp"
-        | 'E' -> "Glu"
-        | 'S' -> "Ser"
-        | 'T' -> "Thr"
-        | 'N' -> "Asn"
-        | 'Q' -> "Gln"
-        | 'C' -> "Cys"
-        | 'U' -> "Sec"
-        | 'G' -> "Gly"
-        | 'P' -> "Pro"
-        | 'A' -> "Ala"
-        | 'V' -> "Val"
-        | 'I' -> "Ile"
-        | 'L' -> "Leu"
-        | 'M' -> "Met"
-        | 'F' -> "Phe"
-        | 'Y' -> "Tyr"
-        | 'W' -> "Trp"
-        | '*' -> "End"
-        | _ -> failwithf "bad aa '%c'" aa
+    /// Translates amino acid represented with one character to a trigram string, eg 'W' -> "Trp" , '*' -> "End"
+    let aaLetterToTrigram : char -> Result<string, string> = function
+        | 'R' -> Ok "Arg"
+        | 'H' -> Ok "His"
+        | 'K' -> Ok "Lys"
+        | 'D' -> Ok "Asp"
+        | 'E' -> Ok "Glu"
+        | 'S' -> Ok "Ser"
+        | 'T' -> Ok "Thr"
+        | 'N' -> Ok "Asn"
+        | 'Q' -> Ok "Gln"
+        | 'C' -> Ok "Cys"
+        | 'U' -> Ok "Sec"
+        | 'G' -> Ok "Gly"
+        | 'P' -> Ok "Pro"
+        | 'A' -> Ok "Ala"
+        | 'V' -> Ok "Val"
+        | 'I' -> Ok "Ile"
+        | 'L' -> Ok "Leu"
+        | 'M' -> Ok "Met"
+        | 'F' -> Ok "Phe"
+        | 'Y' -> Ok "Tyr"
+        | 'W' -> Ok "Trp"
+        | '*' -> Ok "End"
+        | aa -> Error <| sprintf "bad aa '%c'" aa
 
     /// Check is the character is a proper DNA base
     let isDnaBaseStrict x = 
