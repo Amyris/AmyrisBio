@@ -6,7 +6,7 @@ open System.Security.Cryptography
 /// Non biology routes that are helpful for general process / data ops, some bio IO routines
 module utils =
     open System.IO
-    open System.IO.Compression
+    
     let cmdPath = @"c:\WINDOWS\system32\cmd.exe"
     let bashPath = "/bin/bash"
 
@@ -382,3 +382,22 @@ module utils =
                 }
             yield! step()
         }
+     
+    /// Return a string representation of the md5 hash of a file from a path.
+    let md5HashFile path =
+        use f = File.Open(path, FileMode.Open)
+        use md5 = MD5.Create()
+        (StringBuilder(), md5.ComputeHash(f))
+        ||> Array.fold (fun sb b -> sb.Append(b.ToString("x2")))
+        |> string
+        
+    /// Copy a file, and confirm that the md5 checksum of the source and destination match.
+    /// If the checksum does not match, try to delete the destination file, and raise an exception.
+    let copyFileWithChecksums sourcePath destPath =
+        let sourceHash = md5HashFile sourcePath
+        File.Copy(sourcePath, destPath)
+        let destHash = md5HashFile destPath
+        if sourceHash <> destHash then
+            File.Delete(destPath)
+            failwithf "md5 checksums of source and destination do not match.\nSource: %s, Dest: %s"
+                sourceHash destHash   
