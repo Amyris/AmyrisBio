@@ -6,6 +6,7 @@ open System.Security.Cryptography
 /// Non biology routes that are helpful for general process / data ops, some bio IO routines
 module utils =
     open System.IO
+    open Amyris.ErrorHandling
     
     let cmdPath = @"c:\WINDOWS\system32\cmd.exe"
     let bashPath = "/bin/bash"
@@ -391,13 +392,15 @@ module utils =
         ||> Array.fold (fun sb b -> sb.Append(b.ToString("x2")))
         |> string
         
-    /// Copy a file, and confirm that the md5 checksum of the source and destination match.
-    /// If the checksum does not match, try to delete the destination file, and raise an exception.
+    /// Validate a file copy job via checksum validation and return a Result type.
+    /// Return the Failure error message and revert the copy if the checksums of source and destination do not match.
     let copyFileWithChecksums sourcePath destPath =
         let sourceHash = md5HashFile sourcePath
         File.Copy(sourcePath, destPath)
         let destHash = md5HashFile destPath
-        if sourceHash <> destHash then
+        if sourceHash = destHash then
+            ok ()
+        else
             File.Delete(destPath)
-            failwithf "md5 checksums of source and destination do not match.\nSource: %s, Dest: %s"
-                sourceHash destHash   
+            sprintf "md5 checksums of source and destination do not match.\nSource: %s, Dest: %s" sourceHash destHash
+            |> fail
