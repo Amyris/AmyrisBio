@@ -1,3 +1,6 @@
+### v2.1.1 -- July 18, 2019
+* Add a file copy with checksums utility function.
+
 ### v2.1.0 -- July 18, 2018
 * Add support for generating oligos with ambiguous bases.
 * Update FSharp.Core version and use paket management.
