@@ -142,7 +142,7 @@ module utils =
     /// Returns files in dir ending with one of a list of suffices
     let filesEndingWith inDir suffixList =
         Directory.GetFiles(inDir)
-        |> Seq.filter (fun name -> List.exists (fun suffix -> name.EndsWith(suffix)) suffixList)
+        |> Seq.filter (fun name -> List.exists (fun (suffix : string) -> name.EndsWith(suffix)) suffixList)
 
     /// returns each line in the provided stream
     let eachLineInStream (f:StreamReader) = 
