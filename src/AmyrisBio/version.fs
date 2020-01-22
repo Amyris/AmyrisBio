@@ -2,4 +2,4 @@
 
 module Version =
     [<Literal>]
-    let version = "2.0.3"
+    let version = "3.0.0"
