@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Amyris.Bio</RootNamespace>
     <AssemblyName>Amyris.Bio</AssemblyName>
+    <PackageVersion>3.0.0</PackageVersion>
     <Name>Amyris.Bio</Name>
   </PropertyGroup>
   <ItemGroup>
