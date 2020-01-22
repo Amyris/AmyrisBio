@@ -1,3 +1,7 @@
+### v3.0.0 -- January 22, 2020
+* Add support for netcore SDK 3.1
+* BREAKING: Requires .NET Framework 4.7 or greater to run.
+
 ### v2.1.1 -- July 18, 2019
 * Add a file copy with checksums utility function.
 
