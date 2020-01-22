@@ -188,3 +188,8 @@ docs/content/release-notes.md
 .fake
 docs/tools/FSharp.Formatting.svclog
 .paket/Paket.Restore.targets
+.idea/
+**/AssemblyInfo.fs
+.paket/*
+.fake/*
+.tool/*

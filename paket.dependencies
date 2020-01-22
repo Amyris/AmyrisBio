@@ -1,18 +1,16 @@
-source https://nuget.org/api/v2
-
-nuget FSharp.Core redirects: force
-
 group Build
   source https://nuget.org/api/v2
-  
-  nuget SourceLink.Fake
-  nuget FAKE
-  nuget FSharp.Formatting
-
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  storage none
+  framework: >= netstandard2.1,netcoreapp3.1
+  nuget FSharp.Core
 
 group Test
   source https://nuget.org/api/v2
+  storage none
+  framework: >= netstandard2.1,netcoreapp3.1
   
-  nuget NUnit ~> 2
-  nuget NUnit.Runners ~> 2
+  nuget FSharp.Core
+  nuget NUnit ~> 3
+  nuget NUnit.ConsoleRunner ~> 3
+  nuget Microsoft.NET.Test.Sdk
+  nuget NUnit3TestAdapter

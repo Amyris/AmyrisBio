@@ -590,19 +590,19 @@ module SuffixTree =
                false);
             *)
             //MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path,FileMode.Open,mapName,size)
+            let fileStream = File.Open(path,FileMode.Open,FileAccess.Read,FileShare.Read)
+            let mapName = null // not mapping to a name
+            let capacity = 0L // use the file's actual size
+            let accessType = MemoryMappedFiles.MemoryMappedFileAccess.Read // read only access
+            let inheritability = HandleInheritability.None // not configuring security
+            let leaveOpen = false
             MemoryMappedFiles.MemoryMappedFile.CreateFromFile(
-                                                    File.Open(path,FileMode.Open,FileAccess.Read,FileShare.Read),
-                                                    // not mapping to a name
-                                                    null,
-                                                    // use the file's actual size
-                                                    0L,
-                                                    // read only access
-                                                    MemoryMappedFiles.MemoryMappedFileAccess.Read,
-                                                    // not configuring security
-                                                    null,
-                                                    HandleInheritability.None,
-                                                    false
-                                                  )
+                                                    fileStream,
+                                                    mapName,
+                                                    capacity,
+                                                    accessType,
+                                                    inheritability,
+                                                    leaveOpen)
 
         let mm = openMM path
 

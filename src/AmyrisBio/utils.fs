@@ -142,7 +142,7 @@ module utils =
     /// Returns files in dir ending with one of a list of suffices
     let filesEndingWith inDir suffixList =
         Directory.GetFiles(inDir)
-        |> Seq.filter (fun name -> List.exists (fun suffix -> name.EndsWith(suffix)) suffixList)
+        |> Seq.filter (fun name -> List.exists (fun (suffix : string) -> name.EndsWith(suffix)) suffixList)
 
     /// returns each line in the provided stream
     let eachLineInStream (f:StreamReader) = 
@@ -229,25 +229,6 @@ module utils =
     let ts x = Seq.map tabSplit x
 
     let countLines file =  Seq.fold (fun count _(*line*) -> count + 1) 0 (eachLineIn file) 
-
-    // Registry utils
-    // Registry handling    
-    open Microsoft.Win32
-
-    let ensureAmyrisKey () =  
-        let key = Registry.CurrentUser.OpenSubKey("Software",true)
-        match key.OpenSubKey("Amyris",true) with
-            | null ->
-                key.CreateSubKey("Amyris")
-            | anyKey -> anyKey
-
-
-    let getSetKey (key:RegistryKey) keyName keyValue =
-        match key.GetValue(keyName) with
-            | :? string as x -> x
-            | _ -> 
-                key.SetValue(keyName,keyValue)
-                keyValue
 
     // Sequence handling routines
     /// Reverse complement a DNA sequence

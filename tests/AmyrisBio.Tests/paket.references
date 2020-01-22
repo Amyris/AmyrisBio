@@ -1,4 +1,7 @@
-FSharp.Core
+
 group Test
+	FSharp.Core
 	NUnit
-	NUnit.Runners
+	Microsoft.NET.Test.Sdk
+	NUnit3TestAdapter
+	NUnit.ConsoleRunner
